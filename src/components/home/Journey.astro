@@ -65,7 +65,8 @@ const steps = [
 
 <style>
   .jr { position: relative; overflow: hidden; }
-  .jr__pin { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; gap: clamp(28px, 4vh, 56px); padding-block: calc(var(--hdr) + 10px) 40px; }
+  /* todo el bloque fijado entra en la altura de la pantalla, así cada tarjeta se ve completa mientras avanza */
+  .jr__pin { height: 100svh; display: flex; flex-direction: column; justify-content: center; gap: clamp(14px, 3vh, 40px); padding-block: calc(var(--hdr) + 4px) clamp(16px, 3vh, 36px); }
   .jr__head { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr); gap: 40px; align-items: end; }
   .jr__head .kick { margin-bottom: 18px; }
   .jr__route { position: relative; height: 60px; }
@@ -76,13 +77,14 @@ const steps = [
   .jr__truck { position: absolute; top: -12px; left: 14px; width: 40px; height: 30px; margin-left: -20px; border-radius: 10px; display: grid; place-items: center; background: #fff; color: var(--rojo); box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.5); }
   .jr__view { overflow: visible; }
   .jr__track { list-style: none; padding: 0 var(--gutter); margin: 0; display: flex; gap: clamp(16px, 2vw, 32px); width: max-content; will-change: transform; }
-  .jr__panel { width: min(78vw, 1080px); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); gap: clamp(20px, 3vw, 44px); align-items: center; padding: clamp(14px, 1.5vw, 20px); border-radius: 30px; background: var(--asfalto-2); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07); }
-  .jr__media { position: relative; aspect-ratio: 16 / 10; border-radius: 20px; overflow: hidden; background: #1c1d21; }
+  .jr__panel { width: min(78vw, 1040px, calc((100svh - var(--hdr) - 190px) * 2.7)); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); gap: clamp(20px, 3vw, 44px); align-items: center; padding: clamp(14px, 1.5vw, 20px); border-radius: 30px; background: var(--asfalto-2); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07); }
+  .jr__media { position: relative; aspect-ratio: 16 / 10; max-height: calc(100svh - var(--hdr) - 240px); min-height: 180px; border-radius: 20px; overflow: hidden; background: #1c1d21; }
   .jr__media img, .jr__media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .jr__n { position: absolute; left: 18px; bottom: 6px; font-size: clamp(4rem, 9vw, 8rem); color: #fff; line-height: 0.8; text-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
-  .jr__txt { display: grid; gap: 16px; padding-right: 12px; }
-  .jr__stat { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding-top: 16px; border-top: 1px solid var(--line); }
-  .jr__stat b { font-stretch: 125%; font-weight: 850; font-style: italic; font-size: clamp(2rem, 3.6vw, 3.4rem); line-height: 1; color: var(--brasa); }
+  .jr__n { position: absolute; left: 18px; bottom: 6px; font-size: clamp(3rem, 5.6vw, 5.2rem); color: #fff; line-height: 0.8; text-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+  .jr__txt { display: grid; gap: clamp(8px, 1.8vh, 16px); padding-right: 12px; }
+  .jr__txt .prose { font-size: clamp(0.92rem, 0.6rem + 0.9vh, 1.05rem); }
+  .jr__stat { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding-top: clamp(8px, 1.8vh, 16px); border-top: 1px solid var(--line); }
+  .jr__stat b { font-stretch: 125%; font-weight: 850; font-style: italic; font-size: clamp(1.7rem, min(3vw, 5vh), 2.8rem); line-height: 1; color: var(--brasa); }
   .jr__stat .mono { color: var(--muted); }
 
   /* caja 3D (paso 1) */
@@ -103,8 +105,8 @@ const steps = [
   .jr :global(.cube__em) { width: 52%; height: auto; color: #fff; opacity: 0.95; }
   .jr__shadow { position: absolute; left: 50%; bottom: 14%; width: 40%; height: 18px; margin-left: -20%; border-radius: 50%; background: rgba(0, 0, 0, 0.55); filter: blur(12px); }
 
-  @media (max-width: 900px) {
-    .jr__pin { min-height: 0; padding-block: clamp(80px, 12vw, 120px) 60px; }
+  @media (max-width: 900px), (max-height: 559px) {
+    .jr__pin { height: auto; min-height: 0; padding-block: clamp(80px, 12vw, 120px) 60px; }
     .jr__head { grid-template-columns: minmax(0, 1fr); }
     .jr__route { display: none; }
     .jr__track { flex-direction: column; width: auto; }

@@ -53,6 +53,36 @@ const heroIn = () => $$('[data-hero] [data-rv], [data-hero] [data-lines]').forEa
 if (document.documentElement.classList.contains('hero-in')) heroIn()
 else addEventListener('ldr:done', heroIn, { once: true })
 
+/* ---------- Titulares: cada línea entra en su columna ---------- */
+// Las líneas no se parten (son parte del diseño); si alguna es más ancha que su columna, se achica la fuente justo lo necesario.
+const fitLines = () => {
+  $$('[data-lines]').forEach((el) => el.style.removeProperty('font-size'))
+  $$('[data-lines]').forEach((el) => {
+    const w = el.clientWidth
+    if (!w) return
+    const fs = parseFloat(getComputedStyle(el).fontSize)
+    let widest = 0
+    el.querySelectorAll('.ln > span').forEach((s) => {
+      const r = document.createRange()
+      r.selectNodeContents(s)
+      widest = Math.max(widest, r.getBoundingClientRect().width)
+    })
+    const need = widest + fs * 0.12 // la itálica sobresale un poco a la derecha
+    if (need > w) el.style.fontSize = `${Math.floor(fs * (w / need) * 10) / 10}px`
+  })
+  dispatchEvent(new Event('lines:fit'))
+}
+fitLines()
+document.fonts?.ready.then(fitLines)
+let fitT = 0
+let lastW = innerWidth
+addEventListener('resize', () => {
+  if (innerWidth === lastW) return // en el celular, la barra del navegador cambia el alto: no hace falta recalcular
+  lastW = innerWidth
+  clearTimeout(fitT)
+  fitT = window.setTimeout(fitLines, 120)
+})
+
 /* ---------- Contadores ---------- */
 const cio = new IntersectionObserver((es) => es.forEach((e) => {
   if (!e.isIntersecting) return

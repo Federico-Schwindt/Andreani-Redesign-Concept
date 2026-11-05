@@ -82,7 +82,7 @@ if (jr) {
     })
   }
   ScrollTrigger.matchMedia({
-    '(min-width: 901px)': () => {
+    '(min-width: 901px) and (min-height: 560px)': () => {
       const dist = () => track.scrollWidth - innerWidth
       const tl = gsap.to(track, {
         x: () => -dist(),
@@ -104,7 +104,7 @@ if (jr) {
       })
       return () => tl.scrollTrigger?.kill()
     },
-    '(max-width: 900px)': () => {
+    '(max-width: 900px), (max-height: 559px)': () => {
       const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) setActive(panels.indexOf(e.target as HTMLElement)) }), { threshold: 0.55 })
       panels.forEach((p) => io.observe(p))
       return () => io.disconnect()
@@ -112,6 +112,7 @@ if (jr) {
   })
   // las cifras de los paneles cuentan cuando entran (scroll horizontal: se observan con su propio trigger)
   addEventListener('load', () => ScrollTrigger.refresh())
+  addEventListener('lines:fit', () => ScrollTrigger.refresh())
 }
 
 /* ---------- Mapa de la red: tooltip ---------- */
