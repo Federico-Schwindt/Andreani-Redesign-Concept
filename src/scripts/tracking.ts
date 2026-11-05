@@ -22,6 +22,7 @@ const placeFrom = (v: string | null, c: string | null): Place | null => {
   const [l, p = ''] = v.split(', ')
   return { l: l.slice(0, 60), p: p.slice(0, 40), la, lo }
 }
+const full = (p: { l: string; p: string }) => (p.l === p.p || !p.p ? p.l : `${p.l}, ${p.p}`)
 const fmt = (d: Date) => d.toLocaleString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
 function track(n: string) {
@@ -48,8 +49,8 @@ function track(n: string) {
   const statuses = ['Preparado para despachar', 'Despachado', 'En planta de clasificación', 'En camino', 'Entregado']
   t('code').textContent = clean
   t('status').textContent = statuses[stage]
-  t('from').textContent = `${from.l}, ${from.p}`
-  t('to').textContent = `${to.l}, ${to.p}`
+  t('from').textContent = full(from)
+  t('to').textContent = full(to)
   const now = new Date()
   const etaDays = stage === 4 ? 0 : Math.max(1, Math.round((km / 500) * (1 - progress)) + 1)
   const eta = new Date(now.getTime() + etaDays * 86400000)
@@ -58,7 +59,7 @@ function track(n: string) {
   // eventos (más reciente arriba)
   const evs = [
     { s: 0, b: 'Envío creado', d: `Etiqueta generada en ${from.l}` },
-    { s: 1, b: 'Recibido en sucursal', d: `${from.l}, ${from.p}` },
+    { s: 1, b: 'Recibido en sucursal', d: full(from) },
     { s: 2, b: 'Clasificado en Planta Pacheco', d: 'Ruta asignada automáticamente' },
     { s: 3, b: 'En viaje al centro de distribución', d: `Destino: ${to.l}` },
     { s: 3, b: 'En reparto', d: 'El paquete salió con el repartidor' },

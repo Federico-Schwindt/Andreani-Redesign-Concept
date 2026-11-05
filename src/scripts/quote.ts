@@ -99,6 +99,8 @@ function localSearch(q: string): Place[] {
 const LANES: [string, string][] = [['CABA', 'Córdoba'], ['CABA', 'Rosario'], ['Rosario', 'Mendoza'], ['CABA', 'Mar del Plata'], ['Córdoba', 'San Miguel de Tucumán'], ['CABA', 'Neuquén'], ['La Plata', 'Bahía Blanca'], ['CABA', 'Salta'], ['Mendoza', 'CABA'], ['Córdoba', 'Posadas'], ['CABA', 'San Carlos de Bariloche'], ['CABA', 'Ushuaia']]
 const SHORT: Record<string, string> = { 'San Miguel de Tucumán': 'Tucumán', 'San Carlos de Bariloche': 'Bariloche' }
 const short = (l: string) => SHORT[l] ?? l
+/** "Rosario, Santa Fe"; si la localidad y la provincia coinciden (CABA), una sola vez */
+const full = (p: { l: string; p: string }) => (p.l === p.p ? p.l : `${p.l}, ${p.p}`)
 const LANE_DATA = LANES.map(([a, b]) => {
   const o = LOCAL.find((x) => x.l === a), d = LOCAL.find((x) => x.l === b)
   if (!o || !d) return null
@@ -244,7 +246,7 @@ export function initQuote(root: HTMLElement) {
       const p = k === 'o' ? x.o : x.d
       sel[k] = p
       const box = $(`[data-ac="${k}"]`)
-      box.querySelector<HTMLInputElement>('input')!.value = `${p.l}, ${p.p}`
+      box.querySelector<HTMLInputElement>('input')!.value = full(p)
       box.classList.add('is-set')
     }
     updateMap()
@@ -266,7 +268,7 @@ export function initQuote(root: HTMLElement) {
     }
     const choose = (p: Place, auto = false) => {
       clearTimeout(timer); ctrl?.abort()
-      input.value = `${p.l}, ${p.p}`
+      input.value = full(p)
       opts = []; active = -1; render()
       sel[k] = p
       box.classList.add('is-set'); box.classList.remove('bad')
@@ -572,7 +574,7 @@ export function initQuote(root: HTMLElement) {
       const k: K = n === 1 ? 'o' : 'd'
       const mode = n === 1 ? radio('desp') : radio('ent')
       const pane = panes[n]
-      pane.querySelector(`[data-qp="${k}"]`)!.textContent = sel[k] ? `${sel[k]!.l}, ${sel[k]!.p}` : '—'
+      pane.querySelector(`[data-qp="${k}"]`)!.textContent = sel[k] ? full(sel[k]!) : '—'
       pane.querySelectorAll<HTMLElement>('[data-mode]').forEach((m) => (m.hidden = m.dataset.mode !== mode))
       if (n === 1) pane.querySelector('[data-qdate2]')!.textContent = dayTxt()
       if (mode === 'sucursal') loadNear(k); else leaveZoom()
@@ -590,7 +592,7 @@ export function initQuote(root: HTMLElement) {
     if (!p || step !== (k === 'o' ? 1 : 2)) return
     near[k] = sucs.filter((s) => s.t !== 'Centro de distribución' && s.t !== 'Planta').map((s) => ({ ...s, km: haversine(p, s) })).sort((a, b) => a.km - b.km).slice(0, 3)
     if (pick[k] >= near[k].length) pick[k] = 0
-    box.innerHTML = near[k].map((s, i) => `<label class="qt__suc"><input type="radio" name="${root.id}-suc-${k}" value="${i}"${i === pick[k] ? ' checked' : ''} /><span><i>${i + 1}</i><b>${esc(s.n)}</b><em>${s.km < 10 ? num(s.km) : Math.round(s.km)} km</em><small>${esc(s.a)} · ${esc(s.l)}, ${esc(s.p)}</small>${s.h ? `<small>${esc(hours(s.h))}</small>` : ''}</span></label>`).join('')
+    box.innerHTML = near[k].map((s, i) => `<label class="qt__suc"><input type="radio" name="${root.id}-suc-${k}" value="${i}"${i === pick[k] ? ' checked' : ''} /><span><i>${i + 1}</i><b>${esc(s.n)}</b><em>${s.km < 10 ? num(s.km) : Math.round(s.km)} km</em><small>${esc(s.a)} · ${esc(full(s))}</small>${s.h ? `<small>${esc(hours(s.h))}</small>` : ''}</span></label>`).join('')
     candsG.innerHTML = near[k].map((s, i) => { const { x, y } = project(s.la, s.lo); return `<g data-c="${i}" class="${i === pick[k] ? 'on' : ''}" style="transform:translate(${x.toFixed(2)}px,${y.toFixed(2)}px) scale(var(--z));animation-delay:${i * 90}ms"><circle r="26"/><text>${i + 1}</text></g>` }).join('')
     stage.classList.add('is-zoom')
     fitPoints([project(p.la, p.lo), ...near[k].map((s) => project(s.la, s.lo))])
@@ -696,9 +698,9 @@ export function initQuote(root: HTMLElement) {
     const n = '36000' + String(Math.floor(Math.random() * 1e10)).padStart(10, '0')
     const so = sucOf('o'), sd = sucOf('d')
     L('svc').textContent = svcName()
-    L('from').textContent = `${sel.o.l}, ${sel.o.p}`
+    L('from').textContent = full(sel.o)
     L('froma').textContent = radio('desp') === 'retiro' ? `Retiro: ${origAddr()}` : `Despacha en sucursal ${so ? so.n : sel.o.l}`
-    L('to').textContent = f(2, 'nombre').value.trim() || `${sel.d.l}, ${sel.d.p}`
+    L('to').textContent = f(2, 'nombre').value.trim() || full(sel.d)
     L('toa').textContent = radio('ent') === 'domicilio' ? destAddr() : `Retira en sucursal ${sd ? `${sd.n} · ${sd.a}, ${sd.l}` : sel.d.l}`
     L('n').textContent = n.replace(/(\d{4})(\d{4})(\d{4})(\d+)/, '$1 $2 $3 $4')
     L('code').textContent = strip(sel.d.l).replace(/[^a-z]/g, '').slice(0, 3).toUpperCase()
