@@ -1,0 +1,18 @@
+---
+import Icon from './Icon.astro'
+import { AUTHOR, company } from '../lib/site'
+---
+<button class="cpill" type="button" data-open-notice aria-haspopup="dialog"><i aria-hidden="true"></i>Concepto<span class="cpill__x"> · no afiliado a Andreani</span></button>
+<div class="modal" data-notice role="dialog" aria-modal="true" aria-labelledby="notice-t" inert>
+  <div class="modal__scrim" data-close-notice></div>
+  <div class="modal__card">
+    <p class="kick">Aviso</p>
+    <h2 class="dsp d3" id="notice-t" style="margin-top:14px">Esto es un concepto, <em>no el sitio oficial.</em></h2>
+    <div class="modal__body">
+      <p>Rediseño no solicitado, hecho por <b>{AUTHOR.name}</b> como pieza de portfolio. No está afiliado, avalado ni patrocinado por Andreani Grupo Logístico.</p>
+      <p>La marca, el logotipo y el emblema pertenecen a sus titulares y se usan con fines ilustrativos. Las cotizaciones y los seguimientos son simulaciones: no se procesan envíos, pagos ni datos personales.</p>
+      <p>Para envíos reales: <a href={company.official} target="_blank" rel="noopener">andreani.com</a>. Si representás a la marca y querés que algo se retire, escribime a <a href={`mailto:${AUTHOR.email}`}>{AUTHOR.email}</a>.</p>
+    </div>
+    <button class="btn" type="button" data-ack-notice style="margin-top:22px">Entendido, ver el concepto <Icon name="arrow" /></button>
+  </div>
+</div>

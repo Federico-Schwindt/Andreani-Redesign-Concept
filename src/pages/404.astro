@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro'
+import Icon from '../components/Icon.astro'
+import { url } from '../lib/site'
+---
+<Base title="Página no encontrada">
+  <section class="nf t-dark" data-hero>
+    <div class="wrap">
+      <p class="kick">Error 404 · Destinatario desconocido</p>
+      <h1 class="dsp nf__t" data-lines><span class="ln"><span style="--i:0">4<em>0</em>4</span></span></h1>
+      <p class="lede">Este paquete no encontró su dirección. Pero la red sigue funcionando: probá con alguno de estos destinos.</p>
+      <div class="nf__btns">
+        <a class="btn" href={url('/')}>Volver al inicio <Icon name="arrow" /></a>
+        <a class="btn btn--ghost" href={url('/seguimiento/')}>Seguir un envío</a>
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .nf { min-height: 100svh; display: grid; align-items: center; padding-top: var(--hdr); }
+  .nf__t { font-size: clamp(9rem, 34vw, 32rem); line-height: 0.8; margin: 20px 0 30px; }
+  .nf__btns { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+</style>

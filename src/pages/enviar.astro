@@ -1,0 +1,99 @@
+---
+import Base from '../layouts/Base.astro'
+import ArMap from '../components/ArMap.astro'
+import PageHead from '../components/PageHead.astro'
+import Quote from '../components/Quote.astro'
+import Icon from '../components/Icon.astro'
+import Lines from '../components/Lines.astro'
+import { url, productos, stats } from '../lib/site'
+const modos = [
+  { i: 'home', t: 'Te lo retiramos', d: 'Programás el retiro y pasamos por tu casa o tu negocio. Ideal para envíos frecuentes o pesados.' },
+  { i: 'store', t: 'En una sucursal', d: `${stats.sucursales} sucursales con atención al público en todo el país, con horarios reales.` },
+  { i: 'pin', t: 'En un punto HOP', d: `${stats.hop.toLocaleString('es-AR')} comercios de barrio donde despachás y retirás cerca de casa, en horarios extendidos.` },
+]
+const faq = [
+  { q: '¿Cuánto tarda un envío?', a: 'Depende de la distancia y del servicio. Entre ciudades cercanas suele ser de 1 a 2 días hábiles; a la Patagonia o al norte, de 3 a 6. El servicio prioritario acorta los plazos.' },
+  { q: '¿Cómo se calcula el precio?', a: 'Con el origen, el destino y el peso a cobrar: el mayor entre el peso real y el volumétrico (largo × ancho × alto en cm ÷ 4.000). La entrega a domicilio suma un adicional.' },
+  { q: '¿Qué es una etiqueta y cómo la obtengo?', a: 'Es el comprobante con el número de seguimiento que va pegado en el paquete. Se genera online al pagar el envío y la podés imprimir o mostrar en el punto de despacho.' },
+  { q: '¿Qué no puedo enviar?', a: 'Dinero en efectivo, sustancias peligrosas o inflamables, armas, animales vivos y productos perecederos sin el embalaje adecuado, entre otros.' },
+]
+---
+<Base title="Hacer un envío" description="Cotizá tu envío en segundos, elegí cómo despacharlo y generá la etiqueta. Concepto de rediseño para Andreani.">
+  <ArMap />
+  <PageHead compact crumb="Enviar" kick="Hacer un envío" title="Mandalo|*hoy.*" lede="Cotizá en segundos, elegí cómo lo despachás y seguilo hasta la puerta." />
+  <section class="t-dark sec--sm" style="padding-top:0" aria-label="Cotizador">
+    <div class="wrap"><Quote id="cotizador" /></div>
+  </section>
+
+  <section class="sec t-light" aria-labelledby="modos-t">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">Despacho</p><Lines as="h2" class="dsp d2" text="Vos elegís|*cómo empieza.*" /></div>
+        <p class="lede" data-rv id="modos-t">Tres maneras de entregarnos tu paquete. Todas con seguimiento en vivo.</p>
+      </div>
+      <div class="modos">
+        {modos.map((m, i) => (
+          <article class="modo" data-rv style={`--d:${i * 90}`}>
+            <span class="modo__ic"><Icon name={m.i} size={30} /></span>
+            <h3 class="h3">{m.t}</h3>
+            <p class="prose">{m.d}</p>
+          </article>
+        ))}
+      </div>
+      <a class="lnk" href={url('/sucursales/')} style="margin-top:28px">Buscar el punto más cercano <Icon name="arrow" size={18} /></a>
+    </div>
+  </section>
+
+  <section class="sec t-white" aria-labelledby="prod-t">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">Catálogo</p><Lines as="h2" class="dsp d2" text="Mandá lo que|*necesites.*" /></div>
+        <p class="lede" data-rv id="prod-t">Del sobre más liviano al pallet completo.</p>
+      </div>
+      <ul class="cat">
+        {productos.map((p, i) => (
+          <li data-rv style={`--d:${(i % 4) * 70}`}>
+            <a class="cat__it" href={url(`/enviar/?tipo=${['paquete', 'sobre', 'vinos', 'bigger'].includes(p.k) ? p.k : 'paquete'}#cotizador`)}>
+              <Icon name={p.icon} size={34} />
+              <b class="h3">{p.t}</b>
+              <span>{p.d}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec t-light" aria-labelledby="faq-t">
+    <div class="wrap faq">
+      <div><p class="kick">Preguntas frecuentes</p><h2 class="dsp d2" id="faq-t" style="margin-top:20px">Lo que <em>más nos preguntan</em></h2></div>
+      <div class="faq__list">
+        {faq.map((f) => <details data-rv><summary><span>{f.q}</span><i aria-hidden="true"></i></summary><p class="prose">{f.a}</p></details>)}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .modos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .modo { display: grid; gap: 14px; align-content: start; padding: 30px; border-radius: var(--r); background: var(--blanco); box-shadow: 0 30px 60px -44px rgba(15, 16, 18, 0.45); }
+  .modo__ic { width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center; background: var(--rojo); color: #fff; }
+  .cat { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .cat__it { display: grid; gap: 10px; align-content: start; min-height: 220px; padding: 26px; border-radius: var(--r); box-shadow: inset 0 0 0 1px var(--line); transition: background-color 0.35s, color 0.35s, transform 0.5s var(--ease); }
+  .cat__it :global(svg) { color: var(--rojo); margin-bottom: auto; transition: color 0.35s; }
+  .cat__it span { color: var(--muted); font-size: 0.92rem; transition: color 0.35s; }
+  .cat__it:hover { background: var(--rojo); color: #fff; transform: translateY(-4px); box-shadow: none; }
+  .cat__it:hover :global(svg), .cat__it:hover span { color: #fff; }
+  .faq { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(28px, 5vw, 80px); }
+  .faq__list { border-top: 2px solid var(--asfalto); }
+  details { border-bottom: 1px solid var(--line); }
+  summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 22px 0; font-stretch: 110%; font-weight: 700; font-size: clamp(1.05rem, 1.5vw, 1.3rem); }
+  summary::-webkit-details-marker { display: none; }
+  summary i { position: relative; width: 22px; height: 22px; flex: none; }
+  summary i::before, summary i::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 2.5px; margin-top: -1px; border-radius: 2px; background: var(--rojo); transition: transform 0.4s var(--ease); }
+  summary i::after { transform: rotate(90deg); }
+  details[open] summary i::after { transform: rotate(0); }
+  details p { padding-bottom: 22px; }
+  @media (max-width: 1000px) { .modos, .faq { grid-template-columns: minmax(0, 1fr); } .cat { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+

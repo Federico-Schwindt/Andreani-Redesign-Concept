@@ -1,0 +1,7 @@
+---
+/** Solo el emblema "A" de Andreani, en currentColor. */
+import inner from '../assets/emblem-inner.svg.txt?raw'
+interface Props { class?: string }
+const { class: cls } = Astro.props
+---
+<svg class={cls} viewBox="86 61 140 100" fill="currentColor" aria-hidden="true" set:html={inner} />

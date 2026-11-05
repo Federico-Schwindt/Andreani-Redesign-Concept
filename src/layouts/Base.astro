@@ -1,0 +1,76 @@
+---
+import '@fontsource-variable/archivo/wdth.css'
+import '@fontsource-variable/archivo/wdth-italic.css'
+import '@fontsource-variable/jetbrains-mono/wght.css'
+import archivoN from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url'
+import archivoI from '@fontsource-variable/archivo/files/archivo-latin-wdth-italic.woff2?url'
+import '../styles/global.css'
+import Header from '../components/Header.astro'
+import Footer from '../components/Footer.astro'
+import Overlays from '../components/Overlays.astro'
+import Loader from '../components/Loader.astro'
+import { url } from '../lib/site'
+
+interface Props {
+  title?: string
+  description?: string
+  tone?: 'light' | 'dark'
+  loader?: boolean
+  preload?: { href: string; as: string; type?: string; media?: string }[]
+}
+const {
+  title,
+  description = 'Concepto de rediseño no oficial para Andreani: enviar, cotizar, seguir y encontrar sucursales con la red logística líder de la Argentina. Sin afiliación con Andreani Grupo Logístico.',
+  tone = 'light',
+  loader = false,
+  preload = [],
+} = Astro.props
+const full = title ? `${title} · Andreani (concepto)` : 'Andreani — Todo llega (concepto de rediseño)'
+const og = new URL(url('/media/og.jpg'), Astro.site)
+---
+<!doctype html>
+<html lang="es-AR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{full}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#d71920" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Andreani — rediseño conceptual (no oficial)" />
+    <meta property="og:title" content={full} />
+    <meta property="og:description" content={`Concepto de diseño, sin afiliación con Andreani. ${description}`} />
+    <meta property="og:image" content={og} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href={url('/favicon.svg')} type="image/svg+xml" />
+    <link rel="preload" href={archivoI} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={archivoN} as="font" type="font/woff2" crossorigin />
+    {preload.map((p) => <link rel="preload" href={p.href} as={p.as} type={p.type} media={p.media} />)}
+    <script is:inline>document.documentElement.classList.add('js')</script>
+  </head>
+  <body>
+    {loader && <Loader />}
+    <a class="skip" href="#main">Saltar al contenido</a>
+    <Header tone={tone} />
+    <main id="main"><slot /></main>
+    <Footer />
+    <Overlays />
+    <script is:inline>
+      // Lo visible se muestra antes del primer pintado; el resto se revela al hacer scroll
+      ;(function () {
+        var h = innerHeight
+        document.querySelectorAll('[data-rv],[data-lines]').forEach(function (el) {
+          if (el.closest('[data-hero]')) return
+          var r = el.getBoundingClientRect()
+          if (r.top < h && r.bottom > 0) el.classList.add('in')
+        })
+        if (!document.getElementById('ldr')) document.documentElement.classList.add('hero-in')
+      })()
+    </script>
+    <script>
+      import '../scripts/loader'
+      import '../scripts/app'
+    </script>
+  </body>
+</html>

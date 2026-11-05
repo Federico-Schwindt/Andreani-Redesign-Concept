@@ -1,0 +1,133 @@
+---
+import Base from '../layouts/Base.astro'
+import ArMap from '../components/ArMap.astro'
+import PageHead from '../components/PageHead.astro'
+import Icon from '../components/Icon.astro'
+import { MAP } from '../lib/geo'
+const stages = ['Preparado', 'Despachado', 'En planta', 'En camino', 'Entregado']
+---
+<Base title="Seguir un envío" description="Seguí tu envío en vivo: estado, recorrido en el mapa y fecha estimada de entrega. Concepto de rediseño para Andreani (demo).">
+  <ArMap />
+  <PageHead compact crumb="Seguimiento" kick="Seguir un envío" title="¿Dónde está|*mi paquete?*">
+    <form class="trk" data-trk-form data-rv style="--d:350">
+      <label class="sr-only" for="trk-n">Número de seguimiento</label>
+      <Icon name="scan" size={26} />
+      <input class="input" id="trk-n" name="n" inputmode="numeric" autocomplete="off" placeholder="Número de seguimiento" />
+      <button class="btn" type="submit">Seguir envío <Icon name="arrow" /></button>
+    </form>
+    <p class="mono trk__hint" data-rv style="--d:400">Demo: probá con <button type="button" class="trk__ex" data-trk-ex>360002614871055</button> o cualquier número de 15 dígitos.</p>
+  </PageHead>
+
+  <section class="t-dark sec--sm trs" style="padding-top:0" aria-live="polite">
+    <div class="wrap">
+      <p class="trs__err mono" data-trk-err hidden></p>
+      <div class="trs__card" data-trk-out hidden>
+        <div class="trs__top">
+          <div>
+            <p class="mono trs__code">Envío <span data-t="code"></span></p>
+            <h2 class="dsp d3" data-t="status">En camino</h2>
+            <p class="prose" data-t="eta"></p>
+          </div>
+          <div class="trs__route">
+            <div><span class="mono">Desde</span><b data-t="from"></b></div>
+            <Icon name="arrow" />
+            <div><span class="mono">Hasta</span><b data-t="to"></b></div>
+          </div>
+        </div>
+        <ol class="trs__stages">
+          {stages.map((s, i) => <li data-stage={i}><span class="trs__dot"><Icon name="check" size={14} /></span><span>{s}</span></li>)}
+        </ol>
+        <div class="trs__grid">
+          <div class="trs__map">
+            <svg viewBox={`-30 -10 ${MAP.w + 60} ${MAP.h + 20}`} aria-hidden="true">
+              <use href="#ar-provs" class="trs__provs" />
+              <path class="trs__arc trs__arc--bg" data-t="arcbg" />
+              <path class="trs__arc" data-t="arc" />
+              <g data-t="mo" class="trs__mk"><circle r="9" fill="#fff" /></g>
+              <g data-t="md" class="trs__mk"><circle r="22" class="trs__ring" /><circle r="9" fill="#ff4d3d" /></g>
+              <g data-t="truck" class="trs__truck"><rect x="-20" y="-13" width="40" height="26" rx="7" fill="#fff" /><path d="M-10 -2h12v8h-12zM4 0h5l3 4v2h-8z" fill="#d71920" /></g>
+            </svg>
+          </div>
+          <div class="trs__side">
+            <h3 class="mono">Movimientos</h3>
+            <ol class="trs__events" data-t="events"></ol>
+            <div class="trs__meta" data-t="meta"></div>
+            <label class="trs__notify"><input type="checkbox" data-notify /><span></span>Avisarme por WhatsApp cuando esté cerca</label>
+          </div>
+        </div>
+        <p class="mono trs__demo">Simulación de demostración: los datos se generan a partir del número ingresado.</p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .trk { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 36px; max-width: 760px; padding: 10px; border-radius: 26px; background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); }
+  .trk > :global(svg) { position: absolute; left: 30px; top: 50%; transform: translateY(-50%); color: var(--brasa); z-index: 1; }
+  .trk .input { height: 66px; padding-left: 62px; font-size: 1.2rem; font-family: var(--mono); letter-spacing: 0.08em; background: #fff; color: var(--asfalto); }
+  .trk .btn { height: 66px; }
+  .trk__hint { margin-top: 14px; color: var(--muted); }
+  .trk__ex { color: var(--brasa); text-decoration: underline; font-family: var(--mono); }
+  .trs__err { color: var(--brasa); padding: 18px 0; }
+  .trs__card { padding: clamp(18px, 3vw, 36px); border-radius: 32px; background: var(--asfalto-2); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+  .trs__card.in-anim { animation: card-in 0.8s var(--ease) both; }
+  @keyframes card-in { from { opacity: 0; transform: translateY(30px) scale(0.98); } }
+  .trs__top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px 40px; align-items: end; }
+  .trs__code { color: var(--muted); }
+  .trs__top .d3 { margin-top: 8px; color: var(--brasa); }
+  .trs__top .prose { margin-top: 8px; }
+  .trs__route { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-radius: 18px; background: var(--asfalto-3); }
+  .trs__route div { display: grid; gap: 2px; }
+  .trs__route .mono { color: var(--muted); font-size: 0.62rem; }
+  .trs__route b { font-stretch: 110%; }
+  .trs__route :global(svg) { color: var(--brasa); }
+  .trs__stages { list-style: none; padding: 0; margin-top: 32px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+  .trs__stages li { position: relative; display: grid; gap: 10px; font-weight: 600; font-size: 0.9rem; color: var(--muted); }
+  .trs__stages li::before { content: ''; position: absolute; left: 30px; right: -8px; top: 13px; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); }
+  .trs__stages li:last-child::before { display: none; }
+  .trs__stages li.done::before { background: var(--rojo); }
+  .trs__dot { position: relative; z-index: 1; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--asfalto-3); color: transparent; transition: background-color 0.4s, color 0.4s; }
+  .trs__stages li.done { color: #fff; }
+  .trs__stages li.done .trs__dot { background: var(--rojo); color: #fff; }
+  .trs__stages li.now .trs__dot { background: #fff; box-shadow: 0 0 0 6px rgba(255, 77, 61, 0.3); animation: now 1.6s ease-in-out infinite; }
+  @keyframes now { 50% { box-shadow: 0 0 0 12px rgba(255, 77, 61, 0); } }
+  .trs__grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 20px; margin-top: 30px; }
+  .trs__map { border-radius: 24px; background: radial-gradient(80% 70% at 50% 40%, #2a1214, #121316 70%); height: min(78vh, 720px); padding: 10px; }
+  .trs__map svg { width: 100%; height: 100%; }
+  .trs__provs { fill: rgba(255, 255, 255, 0.05); stroke: rgba(255, 255, 255, 0.14); stroke-width: 1.2; }
+  .trs__arc { fill: none; stroke: var(--brasa); stroke-width: 5; stroke-linecap: round; }
+  .trs__arc--bg { stroke: rgba(255, 255, 255, 0.18); stroke-dasharray: 4 10; }
+  .trs__ring { fill: none; stroke: var(--brasa); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: ring 1.8s ease-out infinite; }
+  @keyframes ring { from { transform: scale(0.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+  .trs__side { display: grid; gap: 18px; align-content: start; }
+  .trs__side h3 { color: var(--muted); }
+  .trs__events { list-style: none; padding: 0; display: grid; }
+  .trs__events :global(li) { position: relative; display: grid; grid-template-columns: 110px 1fr; gap: 14px; padding: 14px 0 14px 22px; border-left: 2px solid rgba(255, 255, 255, 0.12); }
+  .trs__events :global(li::before) { content: ''; position: absolute; left: -7px; top: 19px; width: 12px; height: 12px; border-radius: 50%; background: var(--asfalto-3); box-shadow: 0 0 0 3px var(--asfalto-2); }
+  .trs__events :global(li:first-child::before) { background: var(--brasa); }
+  .trs__events :global(time) { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+  .trs__events :global(b) { display: block; font-stretch: 110%; }
+  .trs__events :global(small) { color: var(--muted); }
+  .trs__meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border-radius: 18px; overflow: hidden; background: var(--line); }
+  .trs__meta :global(div) { background: var(--asfalto-3); padding: 14px 16px; display: grid; gap: 2px; }
+  .trs__meta :global(span) { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .trs__notify { display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 600; }
+  .trs__notify input { position: absolute; opacity: 0; }
+  .trs__notify span { width: 46px; height: 26px; border-radius: 99px; background: var(--asfalto-3); position: relative; transition: background-color 0.3s; flex: none; }
+  .trs__notify span::after { content: ''; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.4s var(--ease); }
+  .trs__notify input:checked + span { background: var(--rojo); }
+  .trs__notify input:checked + span::after { transform: translateX(20px); }
+  .trs__notify input:focus-visible + span { outline: 2px solid var(--brasa); outline-offset: 2px; }
+  .trs__demo { margin-top: 20px; color: var(--muted); font-size: 0.62rem; }
+  @media (max-width: 900px) {
+    .trs__grid { grid-template-columns: minmax(0, 1fr); }
+    .trs__map { height: 90vw; max-height: 620px; }
+    .trs__stages { grid-template-columns: repeat(5, minmax(56px, 1fr)); font-size: 0.75rem; overflow-x: auto; }
+    .trs__stages li { font-size: 0.72rem; }
+  }
+  @media (max-width: 560px) { .trk { grid-template-columns: 1fr; } .trs__events :global(li) { grid-template-columns: 1fr; gap: 2px; } }
+</style>
+
+<script>
+  import '../scripts/tracking'
+</script>

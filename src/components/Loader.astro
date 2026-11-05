@@ -1,0 +1,217 @@
+---
+/**
+ * Pantalla de carga: un camión Andreani entra, las cajas se cargan en el semirremolque (vista en corte),
+ * la cámara hace zoom a una caja, la caja llena la pantalla y sus solapas se abren sobre el hero.
+ * La carga corre con CSS (no espera al JS); el zoom y la apertura los dispara src/scripts/loader.ts.
+ */
+import wordmark from '../assets/wordmark-inner.svg.txt?raw'
+import emblem from '../assets/emblem-inner.svg.txt?raw'
+import Emblem from './Emblem.astro'
+import Logo from './Logo.astro'
+
+const COLS = 8
+const ROWS = 3
+// Se carga de adelante (derecha) hacia atrás (izquierda) y de abajo hacia arriba
+const boxes = Array.from({ length: COLS * ROWS }, (_, i) => {
+  const col = COLS - 1 - Math.floor(i / ROWS)
+  const row = ROWS - 1 - (i % ROWS)
+  return { i, x: 354 + col * 54.5, y: 222 + row * 56, col, row }
+})
+const target = boxes.find((b) => b.col === 4 && b.row === 1)!
+const tapeWords = Array.from({ length: 10 })
+---
+<div class="ldr" id="ldr" data-loader aria-hidden="true">
+  <div class="ldr__top">
+    <Logo class="ldr__logo" />
+    <span class="ldr__meta mono">Envío AND-1945-2026 · Origen: Casilda, Santa Fe</span>
+  </div>
+
+  <div class="ldr__stage">
+    <svg class="ldr__scene" viewBox="0 0 1200 520" data-scene>
+      <defs>
+        <linearGradient id="lg-red" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#e7262d" /><stop offset="0.55" stop-color="#d71920" /><stop offset="1" stop-color="#a9121a" />
+        </linearGradient>
+        <linearGradient id="lg-cab" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#e9ebee" /><stop offset="0.6" stop-color="#ffffff" /><stop offset="1" stop-color="#d9dde2" />
+        </linearGradient>
+        <linearGradient id="lg-in" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#2b0507" /><stop offset="1" stop-color="#140203" />
+        </linearGradient>
+        <clipPath id="cp-trailer"><rect x="40" y="108" width="792" height="300" rx="9" /></clipPath>
+        <clipPath id="cp-window"><rect x="344" y="200" width="472" height="190" rx="10" /></clipPath>
+        <symbol id="box" viewBox="0 0 60 62" width="60" height="62" overflow="visible">
+          <polygon points="0,8 7,0 59,0 52,8" fill="#e2c391" />
+          <polygon points="52,8 59,0 59,54 52,62" fill="#a8834e" />
+          <rect x="0" y="8" width="52" height="54" fill="#c9a26b" />
+          <rect x="22" y="8" width="8" height="54" fill="#d71920" />
+          <polygon points="22,8 29,0 37,0 30,8" fill="#e8444a" />
+          <rect x="5" y="40" width="13" height="10" rx="1.5" fill="#fff" opacity=".92" />
+          <rect x="7" y="43" width="9" height="1.4" fill="#222" opacity=".5" /><rect x="7" y="46" width="6" height="1.4" fill="#222" opacity=".5" />
+        </symbol>
+        <g id="wheel">
+          <circle r="31" fill="#141518" />
+          <circle r="19" fill="#c9ccd1" />
+          <circle r="13" fill="#9ea3aa" />
+          <g class="ldr__spokes" stroke="#6d7279" stroke-width="3" stroke-linecap="round"><path d="M0-12V12M-12 0H12M-8.5-8.5 8.5 8.5M-8.5 8.5 8.5-8.5" /></g>
+          <circle r="4" fill="#3a3d42" />
+        </g>
+      </defs>
+
+      <!-- piso -->
+      <ellipse cx="560" cy="476" rx="560" ry="14" fill="#000" opacity=".45" />
+      <g class="ldr__road"><path d="M-400 486H1600" stroke="#2c2e33" stroke-width="2" /><path class="ldr__dash" d="M-400 500H1600" stroke="#3a3c42" stroke-width="4" stroke-dasharray="46 40" /></g>
+
+      <g class="ldr__truck" data-truck>
+        <!-- chasis y patas de apoyo -->
+        <rect x="60" y="404" width="800" height="14" rx="3" fill="#1d1f23" />
+        <rect x="292" y="414" width="9" height="40" fill="#2a2c31" /><rect x="282" y="452" width="29" height="6" rx="2" fill="#2a2c31" />
+
+        <!-- semirremolque -->
+        <g clip-path="url(#cp-trailer)">
+          <rect x="40" y="108" width="792" height="300" fill="url(#lg-red)" />
+          <rect x="40" y="108" width="792" height="10" fill="#ff5a5f" opacity=".35" />
+          <!-- emblema gigante, cortado por el borde trasero -->
+          <g transform="translate(-382.8 -84.3) scale(3.1)" fill="#fff" set:html={emblem} />
+          <!-- franja clásica de la flota: amarillo sobre azul -->
+          <rect x="40" y="386" width="792" height="4" fill="#f2b705" />
+          <rect x="40" y="390" width="792" height="18" fill="#1c2a4f" />
+          <!-- logotipo adelante, arriba -->
+          <g transform="translate(52 5.6) scale(1.2)" fill="#fff" set:html={wordmark} />
+        </g>
+        <!-- puertas traseras -->
+        <rect x="40" y="108" width="14" height="300" fill="#8f0f15" />
+        <rect x="44" y="150" width="6" height="16" rx="2" fill="#d6d6d6" /><rect x="44" y="340" width="6" height="16" rx="2" fill="#d6d6d6" />
+
+        <!-- ventana en corte: el interior y la carga -->
+        <rect x="344" y="200" width="472" height="190" rx="10" fill="url(#lg-in)" stroke="#fff" stroke-opacity=".9" stroke-width="3" />
+        <g clip-path="url(#cp-window)">
+          <g opacity=".22" stroke="#ff4d3d" stroke-width="1">
+            {Array.from({ length: 9 }, (_, k) => <path d={`M${344 + k * 59} 200V390`} />)}
+            {Array.from({ length: 4 }, (_, k) => <path d={`M344 ${200 + k * 63}H816`} />)}
+          </g>
+          {boxes.map((b) => (
+            <use href="#box" x={b.x} y={b.y - 8} class="ldr__box" data-box={b === target ? 'target' : undefined} style={`--i:${b.i}; --dx:${-(b.x - 300)}px`} />
+          ))}
+          <rect class="ldr__scan" x="344" y="200" width="6" height="190" fill="#ff4d3d" />
+        </g>
+        <text x="352" y="194" class="ldr__wtxt" fill="#fff">CARGA · VISTA EN CORTE</text>
+
+        <!-- ruedas del semirremolque -->
+        <use href="#wheel" x="640" y="440" class="ldr__wheel" /><use href="#wheel" x="714" y="440" class="ldr__wheel" />
+
+        <!-- cabina (blanca, como la flota real) -->
+        <g>
+          <rect x="826" y="392" width="40" height="16" fill="#1d1f23" />
+          <path d="M848 412V196q0-26 26-30l118-14q30-2 44 22l30 76q8 18 8 40v116q0 12-12 12H860q-12 0-12-12z" fill="url(#lg-cab)" />
+          <path d="M1010 176l30 72q4 10-6 12l-70 4q-10 0-10-10v-70q0-12 12-12l30 2q10 0 14 2z" fill="#1a2433" />
+          <path d="M1016 186l22 54" stroke="#5b6b82" stroke-width="3" opacity=".6" />
+          <rect x="868" y="190" width="80" height="80" rx="10" fill="#1a2433" opacity=".92" />
+          <path d="M866 290h96v96h-96z" fill="none" stroke="#c7ccd3" stroke-width="2" />
+          <rect x="934" y="330" width="18" height="6" rx="3" fill="#9aa1aa" />
+          <g transform="translate(885 304) scale(.42)" fill="#d71920" set:html={emblem.replace('<path', '<path transform="translate(-86 -62)"')} />
+          <rect x="1050" y="300" width="28" height="74" rx="4" fill="#24272c" />
+          <path d="M1054 308h20M1054 318h20M1054 328h20M1054 338h20M1054 348h20M1054 358h20" stroke="#3b3f46" stroke-width="3" />
+          <rect x="1064" y="282" width="14" height="12" rx="3" fill="#ffe28a" class="ldr__light" />
+          <rect x="1040" y="380" width="44" height="18" rx="5" fill="#2b2e33" />
+          <rect x="1078" y="190" width="8" height="40" rx="3" fill="#2b2e33" />
+          <path d="M1070 210h14" stroke="#2b2e33" stroke-width="4" />
+          <rect x="836" y="150" width="10" height="48" rx="4" fill="#9aa1aa" />
+        </g>
+        <use href="#wheel" x="898" y="440" class="ldr__wheel" /><use href="#wheel" x="1022" y="440" class="ldr__wheel" />
+        <g class="ldr__smoke" fill="#9aa1aa"><circle cx="841" cy="140" r="7" /><circle cx="834" cy="124" r="10" /><circle cx="824" cy="104" r="13" /></g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="ldr__foot">
+    <div class="ldr__pct dsp"><span data-pct>0</span><small>%</small></div>
+    <div class="ldr__info">
+      <p class="mono" data-msg>Cargando tu envío</p>
+      <div class="ldr__bar"><i data-bar></i></div>
+    </div>
+  </div>
+
+  <!-- La caja a pantalla completa: cinta, etiqueta y solapas -->
+  <div class="ldr__face" data-face style={`--tx:${target.x}; --ty:${target.y}`}>
+    <div class="ldr__flap ldr__flap--t"><div class="ldr__tape ldr__tape--t">{tapeWords.map(() => <span>Andreani<Emblem /></span>)}</div></div>
+    <div class="ldr__flap ldr__flap--b"><div class="ldr__tape ldr__tape--b">{tapeWords.map(() => <span>Andreani<Emblem /></span>)}</div></div>
+    <div class="ldr__label">
+      <div class="ldr__lrow"><span class="mono">Para</span><b>Vos</b></div>
+      <div class="ldr__lrow"><span class="mono">Desde</span><b>Andreani · 1945</b></div>
+      <div class="barcode"></div>
+      <span class="mono">AND 0080 1945 2026 · Frágil, abrir con entusiasmo</span>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  // Visitas repetidas en la misma sesión o movimiento reducido: sin pantalla de carga
+  ;(function () {
+    var skip = false
+    try { skip = sessionStorage.getItem('and-ldr') === '1' } catch (e) {}
+    if (skip || matchMedia('(prefers-reduced-motion: reduce)').matches) { var l = document.getElementById('ldr'); if (l) l.remove() }
+    else document.documentElement.classList.add('is-loading')
+  })()
+</script>
+
+<style>
+  .ldr { position: fixed; inset: 0; z-index: 500; background: radial-gradient(120% 90% at 50% 40%, #1d1012 0%, #0f1012 60%); color: var(--hueso); display: grid; grid-template-rows: auto 1fr auto; padding: clamp(18px, 3vw, 36px) var(--gutter); overflow: hidden; perspective: 1400px; }
+  .ldr::before { content: ''; position: absolute; inset: 0; background: radial-gradient(40% 30% at 50% 62%, rgba(215, 25, 32, 0.22), transparent 70%); pointer-events: none; }
+  .ldr__top { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .ldr :global(.ldr__logo) { width: 150px; height: auto; color: #fff; }
+  .ldr__meta { color: rgba(244, 242, 238, 0.55); }
+  .ldr__stage { position: relative; display: grid; place-items: center; min-height: 0; }
+  .ldr__scene { width: min(1120px, 96vw); height: auto; overflow: visible; will-change: transform; }
+  .ldr__truck { animation: ldr-in 0.9s var(--ease) both; }
+  @keyframes ldr-in { from { transform: translateX(-70%); } }
+  .ldr__wheel { transform-box: fill-box; transform-origin: center; }
+  .ldr__wheel :global(.ldr__spokes), .ldr__spokes { transform-box: fill-box; transform-origin: center; animation: ldr-spin 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  @keyframes ldr-spin { from { transform: rotate(-540deg); } }
+  .ldr__dash { animation: ldr-road 0.9s var(--ease) both; }
+  @keyframes ldr-road { from { stroke-dashoffset: 520; } }
+  .ldr__box { opacity: 0; transform: translateX(var(--dx)) translateY(-30px); animation: ldr-box 0.55s cubic-bezier(0.3, 1.25, 0.5, 1) forwards; animation-delay: calc(0.85s + var(--i) * 0.068s); }
+  @keyframes ldr-box { 0% { opacity: 0; transform: translateX(var(--dx)) translateY(-30px); } 25% { opacity: 1; } 75% { transform: translateX(0) translateY(-6px); } 100% { opacity: 1; transform: none; } }
+  .ldr__scan { animation: ldr-scan 1.6s ease-in-out 0.9s 2 both; opacity: 0.7; }
+  @keyframes ldr-scan { 0% { transform: translateX(0); opacity: 0; } 10% { opacity: 0.8; } 90% { opacity: 0.8; } 100% { transform: translateX(466px); opacity: 0; } }
+  .ldr__wtxt { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; opacity: 0.7; }
+  .ldr__smoke circle { opacity: 0; animation: ldr-smoke 1.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+  .ldr__smoke circle:nth-child(2) { animation-delay: 0.2s; } .ldr__smoke circle:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes ldr-smoke { 0% { opacity: 0; transform: scale(0.4); } 30% { opacity: 0.35; } 100% { opacity: 0; transform: translate(-14px, -26px) scale(1.6); } }
+  .ldr__light { animation: ldr-blink 1.2s steps(2) infinite; }
+  @keyframes ldr-blink { 50% { fill: #fff7d6; } }
+
+  .ldr__foot { position: relative; display: flex; align-items: flex-end; gap: clamp(16px, 3vw, 40px); }
+  .ldr__pct { font-size: clamp(3.6rem, 9vw, 8.5rem); line-height: 0.8; color: #fff; display: flex; align-items: flex-start; min-width: 3.4ch; }
+  .ldr__pct small { font-size: 0.4em; color: var(--brasa); margin-left: 0.05em; }
+  .ldr__info { flex: 1; display: grid; gap: 12px; padding-bottom: 8px; }
+  .ldr__info p { color: rgba(244, 242, 238, 0.7); }
+  .ldr__bar { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+  .ldr__bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--rojo), var(--brasa)); transform-origin: left; transform: scaleX(0); transition: transform 0.25s linear; }
+
+  /* la caja a pantalla completa */
+  .ldr__face { position: absolute; inset: 0; opacity: 0; pointer-events: none; transform-style: preserve-3d; }
+  .ldr__flap { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; background-color: #c9a26b; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .24 0 0 0 0 .12 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), linear-gradient(170deg, #d4ae76, #b88f58); backface-visibility: hidden; will-change: transform; }
+  .ldr__flap--t { top: 0; transform-origin: top center; box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.25); }
+  .ldr__flap--b { bottom: 0; transform-origin: bottom center; }
+  .ldr__tape { position: absolute; left: 0; right: 0; height: clamp(46px, 7vh, 80px); background: var(--rojo); display: flex; gap: 40px; align-items: center; white-space: nowrap; color: #fff; overflow: hidden; }
+  .ldr__tape--t { bottom: 0; transform: translateY(50%); }
+  .ldr__tape--b { top: 0; transform: translateY(-50%); }
+  .ldr__tape span { display: inline-flex; align-items: center; gap: 14px; font-stretch: 125%; font-weight: 850; font-style: italic; text-transform: uppercase; font-size: clamp(1rem, 2.4vh, 1.5rem); padding-left: 40px; }
+  .ldr__tape span :global(svg) { width: 34px; height: 24px; }
+  .ldr__label { position: absolute; right: 9%; top: 14%; width: min(320px, 70vw); background: #fff; color: var(--asfalto); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; transform: rotate(-4deg); box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.5); }
+  .ldr__label .barcode { height: 46px; margin-top: 4px; }
+  .ldr__lrow { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed rgba(0, 0, 0, 0.18); padding-bottom: 6px; }
+  .ldr__lrow b { font-stretch: 115%; font-size: 1.15rem; }
+  .ldr__label > .mono { font-size: 0.6rem; color: rgba(15, 16, 18, 0.6); }
+
+  .ldr.is-zoom .ldr__top, .ldr.is-zoom .ldr__foot { opacity: 0; transition: opacity 0.3s; }
+  .ldr.is-open { background: transparent; }
+  .ldr.is-open::before, .ldr.is-open .ldr__stage, .ldr.is-open .ldr__top, .ldr.is-open .ldr__foot { display: none; }
+
+  @media (max-width: 700px) {
+    .ldr__meta { display: none; }
+    .ldr__scene { width: 128vw; transform: translateX(-6vw); }
+    .ldr__label { right: 6%; top: 10%; }
+  }
+</style>

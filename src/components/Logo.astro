@@ -1,0 +1,7 @@
+---
+/** Logo oficial de Andreani (emblema + logotipo), en currentColor. Uso ilustrativo en un concepto no oficial. */
+import inner from '../assets/logo-inner.svg.txt?raw'
+interface Props { class?: string; title?: string }
+const { class: cls, title = 'Andreani' } = Astro.props
+---
+<svg class={cls} viewBox="86 60 544 102" fill="currentColor" role="img" aria-label={title} set:html={inner} />

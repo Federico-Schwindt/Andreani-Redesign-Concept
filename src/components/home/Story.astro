@@ -1,0 +1,84 @@
+---
+import Icon from '../Icon.astro'
+import Lines from '../Lines.astro'
+import Emblem from '../Emblem.astro'
+import { url, historia, stats } from '../../lib/site'
+const big = [
+  { v: stats.envios, dec: 1, u: 'M', l: 'envíos procesados en Argentina en 2025' },
+  { v: stats.vehiculos, dec: 0, u: '', l: 'vehículos en la flota' },
+  { v: stats.diarios, dec: 0, u: '', l: 'productos procesados por día' },
+  { v: stats.colaboradores, dec: 0, u: '', l: 'colaboradores en Argentina y Brasil' },
+]
+---
+<section class="nums t-red sec--sm" aria-label="Andreani en números">
+  <div class="wrap nums__grid">
+    {big.map((b, i) => (
+      <div class="nums__it" data-rv style={`--d:${i * 90}`}>
+        <p class="dsp nums__v"><span data-count={b.v} data-dec={b.dec}>{b.v.toLocaleString('es-AR')}</span>{b.u && <small>{b.u}</small>}</p>
+        <p class="nums__l">{b.l}</p>
+      </div>
+    ))}
+  </div>
+</section>
+
+<section class="story sec t-light" aria-labelledby="story-t">
+  <div class="wrap">
+    <div class="shead">
+      <div>
+        <p class="kick">Desde 1945</p>
+        <Lines as="h2" class="dsp d2" text="80 años|*sin frenar.*" />
+        <span id="story-t" class="sr-only">Nuestra historia</span>
+      </div>
+      <div data-rv>
+        <p class="lede">De dos camiones entre Casilda y Rosario a la red logística más automatizada del país.</p>
+        <a class="lnk" href={url('/nosotros/')} style="margin-top:18px">Conocé la historia completa <Icon name="arrow" size={18} /></a>
+      </div>
+    </div>
+    <ol class="tl" data-tl>
+      {historia.map((h, i) => (
+        <li class="tl__it" data-rv style={`--d:${(i % 4) * 70}`}>
+          <span class="tl__y dsp">{h.y}</span>
+          <span class="tl__dot" aria-hidden="true"></span>
+          <h3 class="h3">{h.t}</h3>
+          <p class="prose">{h.d}</p>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+
+<section class="cta sec t-dark" aria-labelledby="cta-t">
+  <div class="wrap cta__in">
+    <Emblem class="cta__em" />
+    <h2 class="dsp d1" id="cta-t" data-lines><span class="ln"><span style="--i:0">¿Lo</span></span><span class="ln"><span style="--i:1"><em>mandamos?</em></span></span></h2>
+    <p class="lede" data-rv>Cotizá en segundos, elegí cómo lo despachás y seguilo hasta la puerta.</p>
+    <div class="cta__btns" data-rv>
+      <a class="btn" href={url('/enviar/')}>Hacer un envío <Icon name="arrow" /></a>
+      <a class="btn btn--ghost" href={url('/seguimiento/')}>Seguir un envío</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .nums__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+  .nums__it { display: grid; gap: 8px; padding-top: 18px; border-top: 2px solid rgba(255, 255, 255, 0.45); }
+  .nums__v { font-size: clamp(2.2rem, 3.9vw, 4.4rem); line-height: 0.9; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .nums__v small { font-size: 0.45em; }
+  .nums__l { color: rgba(255, 255, 255, 0.9); max-width: 24ch; }
+
+  .tl { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); list-style: none; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(220px, 1fr)); gap: 0; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 12px; scrollbar-width: thin; }
+  .tl__it { position: relative; display: grid; gap: 12px; align-content: start; padding: 0 22px 0 0; scroll-snap-align: start; }
+  .tl__y { font-size: clamp(2.6rem, 4vw, 3.8rem); color: var(--rojo); line-height: 0.9; }
+  .tl__dot { position: relative; height: 18px; }
+  .tl__dot::before { content: ''; position: absolute; left: 0; right: 0; top: 8px; height: 2px; background: var(--line); }
+  .tl__dot::after { content: ''; position: absolute; left: 0; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--rojo); box-shadow: 0 0 0 5px var(--hueso); }
+
+  .cta { overflow: hidden; text-align: center; }
+  .cta__in { display: grid; justify-items: center; gap: 24px; }
+  .cta :global(.cta__em) { position: absolute; left: 50%; top: 50%; width: min(1100px, 130vw); height: auto; transform: translate(-50%, -50%) rotate(-8deg); color: rgba(215, 25, 32, 0.12); pointer-events: none; }
+  .cta .lede { margin-inline: auto; text-align: center; }
+  .cta__btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .cta .d1 { position: relative; }
+
+  @media (max-width: 900px) { .nums__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>

@@ -1,0 +1,97 @@
+---
+import Icon from '../Icon.astro'
+import Emblem from '../Emblem.astro'
+import { media, url, ticker } from '../../lib/site'
+---
+<section class="hero t-dark" data-hero>
+  <div class="hero__media" aria-hidden="true">
+    <picture>
+      <source media="(max-width: 760px)" srcset={media('container-v.avif')} />
+      <img src={media('container.avif')} alt="" width="1280" height="715" fetchpriority="high" />
+    </picture>
+    <video muted loop playsinline preload="none" data-src={media('container.mp4')} data-src-v={media('container-v.mp4')} data-manual data-hero-video></video>
+    <div class="hero__shade"></div>
+  </div>
+
+  <div class="wrap hero__in">
+    <p class="kick hero__kick" data-rv style="--d:100">Andreani · 80 años moviendo la Argentina</p>
+    <h1 class="dsp hero__t" data-lines style="--d:150">
+      <span class="ln"><span style="--i:0">Todo</span></span>
+      <span class="ln"><span style="--i:1"><em>llega.</em></span></span>
+    </h1>
+    <div class="hero__row">
+      <p class="lede hero__lede" data-rv style="--d:450">54,6 millones de envíos al año, a cualquier rincón del país. Enviá, seguí y recibí con la compañía líder en logística de la Argentina.</p>
+
+      <div class="dock" data-rv style="--d:600" data-dock>
+        <div class="dock__tabs" role="tablist" aria-label="¿Qué querés hacer?">
+          <button role="tab" type="button" aria-selected="true" data-dtab="seguir" id="dt-seguir" aria-controls="dp-seguir"><Icon name="scan" size={18} />Seguir</button>
+          <button role="tab" type="button" aria-selected="false" data-dtab="cotizar" id="dt-cotizar" aria-controls="dp-cotizar" tabindex="-1"><Icon name="box" size={18} />Cotizar</button>
+          <button role="tab" type="button" aria-selected="false" data-dtab="sucursal" id="dt-sucursal" aria-controls="dp-sucursal" tabindex="-1"><Icon name="pin" size={18} />Sucursal</button>
+          <span class="dock__ind" aria-hidden="true"></span>
+        </div>
+        <div class="dock__p" id="dp-seguir" role="tabpanel" aria-labelledby="dt-seguir"><form class="dock__f" action={url('/seguimiento/')} method="get">
+          <label class="sr-only" for="hero-n">Número de seguimiento</label>
+          <input class="input" id="hero-n" name="n" inputmode="numeric" placeholder="Número de seguimiento" autocomplete="off" />
+          <button class="btn" type="submit">Seguir <Icon name="arrow" /></button>
+          <p class="mono dock__hint">Probá con 360002614871055 · sin guiones ni puntos</p>
+        </form></div>
+        <div class="dock__p" id="dp-cotizar" role="tabpanel" aria-labelledby="dt-cotizar" hidden><form class="dock__f" action={url('/enviar/') + '#cotizador'} method="get">
+          <label class="sr-only" for="hero-o">Desde</label>
+          <input class="input" id="hero-o" name="o" placeholder="Desde (ciudad o CP)" autocomplete="off" />
+          <label class="sr-only" for="hero-d">Hasta</label>
+          <input class="input" id="hero-d" name="d" placeholder="Hasta" autocomplete="off" />
+          <button class="btn" type="submit">Cotizar <Icon name="arrow" /></button>
+        </form></div>
+        <div class="dock__p" id="dp-sucursal" role="tabpanel" aria-labelledby="dt-sucursal" hidden><form class="dock__f" action={url('/sucursales/')} method="get">
+          <label class="sr-only" for="hero-q">Localidad, provincia o código postal</label>
+          <input class="input" id="hero-q" name="q" placeholder="Localidad, provincia o CP" autocomplete="off" />
+          <button class="btn" type="submit">Buscar <Icon name="arrow" /></button>
+          <p class="mono dock__hint">153 sucursales y 2.850 puntos HOP en todo el país</p>
+        </form></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero__ticker" aria-hidden="true">
+    {[0, 1].map(() => <div class="hero__track">{ticker.map((t) => <><span>{t}</span><Emblem class="hero__e" /></>)}</div>)}
+  </div>
+</section>
+
+<style>
+  .hero { position: relative; min-height: 100svh; display: flex; flex-direction: column; overflow: hidden; isolation: isolate; }
+  .hero__media { position: absolute; inset: 0; z-index: -1; }
+  .hero__media img, .hero__media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hero__media video { opacity: 0; transition: opacity 1s; }
+  .hero__media video.on { opacity: 1; }
+  html.hero-in .hero__media img, html.hero-in .hero__media video { animation: hero-zoom 2.4s var(--ease) both; }
+  @keyframes hero-zoom { from { transform: scale(1.18); } }
+  .hero__shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15, 16, 18, 0.88) 0%, rgba(15, 16, 18, 0.55) 45%, rgba(15, 16, 18, 0.1) 100%), linear-gradient(0deg, rgba(15, 16, 18, 0.85), transparent 45%); }
+  .hero__in { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; padding-top: calc(var(--hdr) + 40px); padding-bottom: clamp(28px, 4vw, 56px); }
+  .hero__t { font-size: clamp(5rem, 1rem + 15vw, 17rem); margin-top: 18px; line-height: 0.8; }
+  .hero__t em { color: var(--brasa); }
+  .hero__row { display: flex; justify-content: space-between; align-items: flex-end; gap: clamp(24px, 4vw, 64px); margin-top: clamp(24px, 3vw, 44px); }
+  .hero__lede { color: rgba(244, 242, 238, 0.82); max-width: 38ch; }
+
+  /* dock de acciones */
+  .dock { width: min(560px, 100%); padding: 10px; border-radius: 26px; background: rgba(244, 242, 238, 0.12); backdrop-filter: blur(22px) saturate(1.4); -webkit-backdrop-filter: blur(22px) saturate(1.4); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 40px 80px -40px rgba(0, 0, 0, 0.7); }
+  .dock__tabs { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); padding: 4px; border-radius: 18px; background: rgba(15, 16, 18, 0.45); }
+  .dock__tabs button { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; border-radius: 14px; font-weight: 700; font-stretch: 110%; font-size: 0.92rem; color: rgba(244, 242, 238, 0.72); transition: color 0.3s; }
+  .dock__tabs button[aria-selected='true'] { color: #fff; }
+  .dock__ind { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 3); border-radius: 14px; background: var(--rojo); transition: transform 0.55s var(--ease); transform: translateX(calc(var(--t, 0) * 100%)); box-shadow: 0 10px 30px -10px rgba(215, 25, 32, 0.8); }
+  .dock__f { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px 4px 4px; }
+  #dp-cotizar .dock__f { grid-template-columns: 1fr 1fr auto; }
+  .dock__f .input { background: rgba(255, 255, 255, 0.96); color: var(--asfalto); }
+  .dock__hint { grid-column: 1 / -1; color: rgba(244, 242, 238, 0.6); font-size: 0.66rem; padding: 4px 6px 2px; }
+
+  .hero__ticker { display: flex; overflow: hidden; border-top: 1px solid rgba(255, 255, 255, 0.14); background: rgba(15, 16, 18, 0.5); backdrop-filter: blur(8px); }
+  .hero__track { display: flex; flex: none; align-items: center; gap: 28px; padding: 14px 28px 14px 0; animation: tape 48s linear infinite; }
+  .hero__track span { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; color: rgba(244, 242, 238, 0.82); }
+  .hero :global(.hero__e) { width: 24px; height: 17px; color: var(--brasa); flex: none; }
+
+  @media (max-width: 900px) {
+    .hero__row { flex-direction: column; align-items: stretch; }
+    #dp-cotizar .dock__f { grid-template-columns: 1fr; }
+    .hero__shade { background: linear-gradient(0deg, rgba(15, 16, 18, 0.92) 30%, rgba(15, 16, 18, 0.35) 70%, rgba(15, 16, 18, 0.55)); }
+  }
+  @media (max-width: 520px) { .dock__f, #dp-cotizar .dock__f { grid-template-columns: 1fr; } .dock__tabs button { font-size: 0.84rem; gap: 6px; } }
+</style>

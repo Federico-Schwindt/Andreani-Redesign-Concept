@@ -1,0 +1,65 @@
+---
+import Logo from './Logo.astro'
+import Emblem from './Emblem.astro'
+import Icon from './Icon.astro'
+import { url, company, AUTHOR, nav } from '../lib/site'
+---
+<footer class="ftr t-dark">
+  <div class="tape" aria-hidden="true">
+    {[0, 1].map(() => <div class="tape__track" style="--dur:40s">{Array.from({ length: 8 }, () => <><span>Andreani</span><Emblem class="tape__e" /></>)}</div>)}
+  </div>
+  <div class="wrap ftr__in">
+    <div class="ftr__top">
+      <div class="ftr__brand">
+        <Logo class="ftr__logo" />
+        <p class="dsp ftr__claim">Todo <em>llega.</em></p>
+      </div>
+      <div class="ftr__col">
+        <h2 class="mono">Personas</h2>
+        <a href={url('/enviar/')}>Hacer un envío</a>
+        <a href={url('/seguimiento/')}>Seguir un envío</a>
+        <a href={url('/sucursales/')}>Sucursales y puntos HOP</a>
+      </div>
+      <div class="ftr__col">
+        <h2 class="mono">Empresas</h2>
+        <a href={url('/empresas/')}>Soluciones logísticas</a>
+        <a href={url('/empresas/#industrias')}>Industrias</a>
+        <a href={url('/empresas/#contacto')}>Asesoramiento comercial</a>
+      </div>
+      <div class="ftr__col">
+        <h2 class="mono">Andreani</h2>
+        <a href={url('/nosotros/')}>Nuestra historia</a>
+        <a href={url('/nosotros/#sustentabilidad')}>Sustentabilidad</a>
+        <a href={company.phoneHref}><Icon name="phone" size={16} /> {company.phone}</a>
+      </div>
+    </div>
+    <p class="ftr__legal">
+      Concepto de rediseño no oficial, creado por {AUTHOR.name} con fines de portfolio. No está afiliado, avalado ni patrocinado por Andreani Grupo Logístico.
+      “Andreani”, su logotipo, emblema y marcas relacionadas pertenecen a sus titulares y se muestran solo con fines ilustrativos. Cotizaciones y seguimientos son demostraciones: no se procesan envíos ni se guardan datos. Datos de sucursales tomados de la API pública de Andreani; cifras del Reporte de Sustentabilidad 2025.
+      Sitio oficial: <a href={company.official} target="_blank" rel="noopener">andreani.com</a>.
+    </p>
+    <div class="ftr__bot mono">
+      <span>Buenos Aires, Argentina · San Pablo, Brasil</span>
+      <span class="ftr__links"><a href={url('/pitch/')}>Ver la propuesta</a><button type="button" data-open-notice>Aviso de concepto</button></span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .ftr { position: relative; overflow: hidden; }
+  .ftr .tape { --h: 52px; }
+  .ftr :global(.tape__e) { width: 30px; height: 22px; flex: none; }
+  .ftr__in { padding-top: clamp(64px, 8vw, 120px); }
+  .ftr__top { display: grid; grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 0.7fr)); gap: 40px; }
+  .ftr :global(.ftr__logo) { width: 210px; height: auto; color: #fff; }
+  .ftr__claim { margin-top: 26px; font-size: clamp(2.8rem, 6vw, 5.6rem); }
+  .ftr__col h2 { color: var(--brasa); margin-bottom: 14px; }
+  .ftr__col a { display: flex; align-items: center; gap: 8px; padding: 5px 0; color: rgba(244, 242, 238, 0.82); transition: color 0.25s, transform 0.4s var(--ease); }
+  .ftr__col a:hover { color: #fff; transform: translateX(4px); }
+  .ftr__legal { margin-top: clamp(48px, 6vw, 90px); padding-top: 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--muted); max-width: 120ch; }
+  .ftr__legal a { color: #fff; text-decoration: underline; }
+  .ftr__bot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding: 22px 0 80px; color: var(--muted); }
+  .ftr__links { display: flex; gap: 20px; }
+  .ftr__links a, .ftr__links button { color: var(--brasa); text-transform: uppercase; letter-spacing: 0.04em; }
+  @media (max-width: 900px) { .ftr__top { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ftr__brand { grid-column: 1 / -1; } }
+</style>

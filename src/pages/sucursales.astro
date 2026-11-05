@@ -1,0 +1,89 @@
+---
+import Base from '../layouts/Base.astro'
+import ArMap from '../components/ArMap.astro'
+import PageHead from '../components/PageHead.astro'
+import Icon from '../components/Icon.astro'
+import sucursales from '../data/sucursales.json'
+import { MAP, project } from '../lib/geo'
+import { stats } from '../lib/site'
+const list = sucursales as { n: string; t: string; l: string; p: string; la: number; lo: number }[]
+const tipos = ['Sucursal', 'Centro de distribución', 'Agencia']
+---
+<Base title="Sucursales y puntos HOP" description={`Encontrá la sucursal de Andreani más cercana: ${list.length} puntos de atención reales con dirección, horarios y cómo llegar. Concepto de rediseño.`}>
+  <ArMap />
+  <PageHead compact crumb="Sucursales" kick="Sucursales" title="Cerca|*tuyo.*" lede={`${list.length} sucursales y centros que atienden al público, con datos reales. Además, ${stats.hop.toLocaleString('es-AR')} puntos HOP en comercios de barrio.`} />
+
+  <section class="t-dark sec--sm" style="padding-top:0" aria-label="Buscador de sucursales">
+    <div class="wrap fnd" data-finder>
+      <div class="fnd__panel">
+        <div class="fnd__search">
+          <Icon name="search" />
+          <label class="sr-only" for="fnd-q">Buscar por localidad, provincia, código postal o nombre</label>
+          <input class="input" id="fnd-q" type="search" placeholder="Localidad, provincia o CP" autocomplete="off" data-fnd-q />
+        </div>
+        <div class="fnd__tools">
+          <button class="btn btn--sm" type="button" data-fnd-geo><Icon name="locate" /> Cerca mío</button>
+          <div class="fnd__chips" role="group" aria-label="Filtrar por tipo">
+            {tipos.map((t) => <button type="button" class="fnd__chip" aria-pressed="false" data-fnd-type={t}>{t}</button>)}
+          </div>
+        </div>
+        <p class="mono fnd__count" data-fnd-count aria-live="polite"></p>
+        <ol class="fnd__list" data-fnd-list></ol>
+      </div>
+      <div class="fnd__map">
+        <svg viewBox={`-30 -10 ${MAP.w + 60} ${MAP.h + 20}`} data-fnd-svg role="img" aria-label="Mapa de sucursales">
+          <use href="#ar-provs" class="fnd__provs" />
+          <g class="fnd__dots">{list.map((s, i) => { const { x, y } = project(s.la, s.lo); return <circle cx={x.toFixed(1)} cy={y.toFixed(1)} r="4" data-i={i} /> })}</g>
+          <g class="fnd__me" data-fnd-me><circle r="8" /><circle r="20" class="fnd__mering" /></g>
+          <g class="fnd__sel" data-fnd-sel><circle r="16" class="fnd__selring" /><circle r="7" /></g>
+        </svg>
+        <button type="button" class="fnd__reset mono" data-fnd-reset>Ver todo el país</button>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .fnd { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+  .fnd__panel { display: grid; gap: 14px; padding: 16px; border-radius: 30px; background: var(--asfalto-2); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+  .fnd__search { position: relative; }
+  .fnd__search :global(svg) { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--brasa); }
+  .fnd__search .input { height: 62px; padding-left: 56px; font-size: 1.1rem; background: #fff; color: var(--asfalto); }
+  .fnd__tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .fnd__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fnd__chip { height: 38px; padding: 0 14px; border-radius: 999px; font-weight: 600; font-size: 0.84rem; box-shadow: inset 0 0 0 1px var(--line); transition: background-color 0.25s, color 0.25s; }
+  .fnd__chip[aria-pressed='true'] { background: #fff; color: var(--asfalto); box-shadow: none; }
+  .fnd__count { color: var(--muted); }
+  .fnd__list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; max-height: 70vh; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+  .fnd__list :global(li) { display: grid; gap: 6px; padding: 16px 18px; border-radius: 18px; background: var(--asfalto-3); cursor: pointer; transition: box-shadow 0.25s, background-color 0.25s; }
+  .fnd__list :global(li:hover), .fnd__list :global(li.on) { box-shadow: inset 0 0 0 2px var(--rojo); }
+  .fnd__list :global(.fi__top) { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  .fnd__list :global(.fi__n) { font-stretch: 110%; font-weight: 750; font-size: 1.05rem; }
+  .fnd__list :global(.fi__km) { font-family: var(--mono); font-size: 0.72rem; color: var(--brasa); white-space: nowrap; }
+  .fnd__list :global(.fi__t) { justify-self: start; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 8px; border-radius: 99px; background: rgba(255, 77, 61, 0.15); color: #ff8a7e; }
+  .fnd__list :global(.fi__a), .fnd__list :global(.fi__h) { color: var(--muted); font-size: 0.88rem; }
+  .fnd__list :global(.fi__go) { justify-self: start; display: inline-flex; gap: 6px; align-items: center; font-weight: 700; font-size: 0.86rem; color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+  .fnd__map { position: sticky; top: calc(var(--hdr) + 10px); height: calc(100svh - var(--hdr) - 30px); min-height: 520px; border-radius: 30px; background: radial-gradient(80% 70% at 50% 40%, #2a1214, #121316 70%); overflow: hidden; }
+  .fnd__map svg { width: 100%; height: 100%; }
+  .fnd__provs { fill: rgba(255, 255, 255, 0.05); stroke: rgba(255, 255, 255, 0.16); stroke-width: 1.1; vector-effect: non-scaling-stroke; }
+  .fnd__dots circle { fill: rgba(255, 255, 255, 0.35); transition: fill 0.3s, opacity 0.3s; cursor: pointer; }
+  .fnd__dots circle.hit { fill: #fff; }
+  .fnd__dots circle.off { opacity: 0.15; }
+  .fnd__me, .fnd__sel { opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .fnd__me.on, .fnd__sel.on { opacity: 1; }
+  .fnd__me circle { fill: #3b82f6; }
+  .fnd__me .fnd__mering { fill: rgba(59, 130, 246, 0.25); }
+  .fnd__sel circle { fill: var(--rojo); stroke: #fff; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+  .fnd__sel .fnd__selring { fill: rgba(215, 25, 32, 0.25); stroke: none; transform-box: fill-box; transform-origin: center; animation: pulse 2s ease-out infinite; }
+  @keyframes pulse { from { transform: scale(0.5); opacity: 1; } to { transform: scale(2); opacity: 0; } }
+  .fnd__reset { position: absolute; right: 16px; bottom: 16px; padding: 10px 14px; border-radius: 99px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(8px); }
+  @media (max-width: 900px) {
+    .fnd { grid-template-columns: minmax(0, 1fr); }
+    .fnd__map { position: relative; top: 0; height: 100vw; max-height: 560px; min-height: 0; order: -1; }
+    .fnd__list { max-height: none; }
+  }
+</style>
+
+<script>
+  import '../scripts/finder'
+</script>

@@ -1,0 +1,9 @@
+---
+/** Título que se revela por líneas (renderizado en el servidor). "|" separa líneas, *texto* va en rojo. */
+interface Props { text: string; as?: string; class?: string; d?: number }
+const { text, as: Tag = 'h2', class: cls, d = 0 } = Astro.props
+const lines = text.split('|').map((l) => l.trim().replace(/\*(.+?)\*/g, '<em>$1</em>'))
+---
+<Tag class={cls} data-lines style={`--d:${d}`}>
+  {lines.map((l, i) => <span class="ln"><span style={`--i:${i}`} set:html={l} /></span>)}
+</Tag>

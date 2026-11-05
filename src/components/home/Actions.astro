@@ -1,0 +1,68 @@
+---
+import Icon from '../Icon.astro'
+import Lines from '../Lines.astro'
+import { url, productos } from '../../lib/site'
+const acciones = [
+  { href: '/enviar/', icon: 'box', t: 'Enviar un paquete', d: 'Cotizá, pagá y elegí si lo retiramos o lo dejás en un punto.', tag: 'Más elegido' },
+  { href: '/seguimiento/', icon: 'scan', t: 'Seguir un envío', d: 'Dónde está, quién lo tiene y cuándo llega. En vivo.', tag: '' },
+  { href: '/sucursales/', icon: 'store', t: 'Retirar o despachar', d: 'Sucursales y puntos HOP cerca tuyo, con horarios reales.', tag: '' },
+  { href: '/enviar/?tipo=cambios', icon: 'swap', t: 'Cambios y devoluciones', d: 'Retiramos el producto y entregamos el nuevo en un solo viaje.', tag: '' },
+]
+---
+<section class="acts sec t-light" id="acciones">
+  <div class="wrap">
+    <div class="shead">
+      <div>
+        <p class="kick">Para personas</p>
+        <Lines class="dsp d2" text="¿Qué querés|hacer *hoy?*" />
+      </div>
+      <p class="lede" data-rv>Todo lo importante a un toque: sin menús escondidos, sin vueltas.</p>
+    </div>
+    <div class="acts__grid">
+      {acciones.map((a, i) => (
+        <a class="act" href={url(a.href)} data-rv style={`--d:${i * 80}`} data-tilt>
+          <span class="act__ic"><Icon name={a.icon} size={30} /></span>
+          {a.tag && <span class="act__tag mono">{a.tag}</span>}
+          <span class="act__t h3">{a.t}</span>
+          <span class="act__d">{a.d}</span>
+          <span class="act__go"><Icon name="arrow" /></span>
+          <span class="act__tape" aria-hidden="true"></span>
+        </a>
+      ))}
+    </div>
+    <div class="prods" data-rv>
+      <p class="mono prods__h">¿Qué necesitás enviar?</p>
+      <ul class="prods__list">
+        {productos.map((p) => (
+          <li><a href={url(`/enviar/?tipo=${p.k}`)} class="prod"><Icon name={p.icon} size={20} /><span><b>{p.t}</b><small>{p.d}</small></span></a></li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .acts__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; perspective: 1200px; }
+  .act { position: relative; display: flex; flex-direction: column; gap: 12px; min-height: 340px; padding: 26px; border-radius: var(--r); background: var(--blanco); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 30px 60px -44px rgba(15, 16, 18, 0.45); overflow: hidden; transform-style: preserve-3d; transition: transform 0.6s var(--ease), box-shadow 0.5s; }
+  .act:hover { box-shadow: 0 40px 70px -40px rgba(215, 25, 32, 0.55); }
+  .act__ic { width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center; background: var(--hueso); color: var(--rojo); transition: background-color 0.4s, color 0.4s, transform 0.6s var(--ease); }
+  .act:hover .act__ic { background: var(--rojo); color: #fff; transform: rotate(-8deg) scale(1.06); }
+  .act__tag { position: absolute; top: 26px; right: 26px; padding: 6px 10px; border-radius: 999px; background: var(--rojo); color: #fff; font-size: 0.62rem; }
+  .act__t { margin-top: auto; }
+  .act__d { color: var(--muted); font-size: 0.95rem; }
+  .act__go { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1.5px var(--line); margin-top: 6px; transition: background-color 0.4s, color 0.4s, transform 0.5s var(--ease), box-shadow 0.4s; }
+  .act:hover .act__go { background: var(--asfalto); color: #fff; box-shadow: none; transform: translateX(6px); }
+  .act__tape { position: absolute; left: -10%; right: -10%; top: 46%; height: 34px; background: var(--rojo); transform: translateX(-110%) rotate(-8deg); transition: transform 0.7s var(--ease); opacity: 0.08; pointer-events: none; }
+  .act:hover .act__tape { transform: translateX(0) rotate(-8deg); }
+  .prods { margin-top: clamp(28px, 4vw, 56px); }
+  .prods__h { color: var(--muted); margin-bottom: 14px; }
+  .prods__list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .prod { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; box-shadow: inset 0 0 0 1px var(--line); transition: background-color 0.3s, box-shadow 0.3s, transform 0.4s var(--ease); }
+  .prod:hover { background: var(--blanco); box-shadow: inset 0 0 0 1px transparent, 0 16px 30px -24px rgba(0, 0, 0, 0.4); transform: translateY(-2px); }
+  .prod :global(svg) { color: var(--rojo); flex: none; }
+  .prod span { display: grid; line-height: 1.25; }
+  .prod b { font-stretch: 110%; font-size: 0.96rem; }
+  .prod small { color: var(--muted); font-size: 0.8rem; }
+  @media (max-width: 1100px) { .acts__grid, .prods__list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .acts__grid, .prods__list { grid-template-columns: minmax(0, 1fr); } .act { min-height: 240px; } }
+</style>

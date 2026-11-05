@@ -1,0 +1,113 @@
+---
+import Icon from '../Icon.astro'
+import Emblem from '../Emblem.astro'
+import { media } from '../../lib/site'
+const steps = [
+  { n: '01', t: 'Lo preparás', d: 'Embalás, generás la etiqueta online y la pegás. Si vendés por internet, la integramos con tu tienda.', stat: 'Etiqueta en 1 minuto', kind: 'box' },
+  { n: '02', t: 'Lo despachás', d: 'En una de las 153 sucursales, en alguno de los 2.850 puntos HOP o te lo retiramos por casa.', stat: '+3.000 puntos de atención', kind: 'video', v: 'centro' },
+  { n: '03', t: 'Lo clasificamos', d: 'En Planta Pacheco, el hub más automatizado del país, la inteligencia artificial ordena cada paquete.', stat: 'envíos por hora', count: 26000, kind: 'video', v: 'hub' },
+  { n: '04', t: 'Viaja', d: 'Una flota de 4.192 vehículos que en 2025 recorrió 163,2 millones de kilómetros por todo el país.', stat: 'M de km en 2025', count: 163.2, dec: 1, kind: 'video', v: 'ruta' },
+  { n: '05', t: 'Llega', d: 'Más de 21 millones de domicilios visitados en un año. Y vos seguís cada paso desde el celular.', stat: 'M de domicilios visitados', count: 21.3, dec: 1, kind: 'video', v: 'entrega' },
+]
+---
+<section class="jr t-dark" data-journey aria-labelledby="jr-t">
+  <div class="jr__pin" data-jpin>
+    <div class="wrap jr__head">
+      <div>
+        <p class="kick">Cómo funciona</p>
+        <h2 class="dsp d2" id="jr-t">El viaje de <em>tu paquete</em></h2>
+      </div>
+      <div class="jr__route" aria-hidden="true">
+        <div class="jr__line"><i data-jfill></i></div>
+        {steps.map((s, i) => <span class="jr__stop" style={`--p:${i / (steps.length - 1)}`} data-jstop={i}>{s.n}</span>)}
+        <span class="jr__truck" data-jtruck><Icon name="truck" size={22} /></span>
+      </div>
+    </div>
+    <div class="jr__view">
+      <ol class="jr__track" data-jtrack>
+        {steps.map((s, i) => (
+          <li class="jr__panel" data-jpanel={i}>
+            <div class="jr__media">
+              {s.kind === 'video' ? (
+                <>
+                  <img src={media(`${s.v}-sm.avif`)} alt="" width="720" height="402" loading="lazy" decoding="async" />
+                  <video muted loop playsinline preload="none" data-src={media(`${s.v}.mp4`)} aria-hidden="true"></video>
+                </>
+              ) : (
+                <div class="jr__box" aria-hidden="true">
+                  <div class="cube">
+                    <i class="cube__f cube__front"><span class="cube__tape"></span><span class="cube__label"><b>AND</b><span class="barcode"></span></span></i>
+                    <i class="cube__f cube__back"><span class="cube__tape"></span></i>
+                    <i class="cube__f cube__left"></i>
+                    <i class="cube__f cube__right"><Emblem class="cube__em" /></i>
+                    <i class="cube__f cube__top"><span class="cube__tape cube__tape--h"></span></i>
+                    <i class="cube__f cube__bottom"></i>
+                  </div>
+                  <span class="jr__shadow"></span>
+                </div>
+              )}
+              <span class="jr__n dsp">{s.n}</span>
+            </div>
+            <div class="jr__txt">
+              <h3 class="dsp d3">{s.t}</h3>
+              <p class="prose">{s.d}</p>
+              <p class="jr__stat">
+                {s.count !== undefined ? <b class="tnum" data-count={s.count} data-dec={s.dec ?? 0}>0</b> : null}
+                <span class="mono">{s.stat}</span>
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </div>
+</section>
+
+<style>
+  .jr { position: relative; overflow: hidden; }
+  .jr__pin { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; gap: clamp(28px, 4vh, 56px); padding-block: calc(var(--hdr) + 10px) 40px; }
+  .jr__head { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr); gap: 40px; align-items: end; }
+  .jr__head .kick { margin-bottom: 18px; }
+  .jr__route { position: relative; height: 60px; }
+  .jr__line { position: absolute; left: 14px; right: 14px; top: 29px; height: 3px; border-radius: 3px; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0 10px, transparent 10px 18px); overflow: hidden; }
+  .jr__line i { display: block; height: 100%; width: 100%; background: var(--brasa); transform-origin: left; transform: scaleX(0); }
+  .jr__stop { position: absolute; top: 14px; left: calc(14px + (100% - 28px) * var(--p)); width: 32px; height: 32px; margin-left: -16px; border-radius: 50%; display: grid; place-items: center; font-family: var(--mono); font-size: 0.68rem; background: var(--asfalto-2); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.25); transition: background-color 0.3s, box-shadow 0.3s; }
+  .jr__stop.on { background: var(--rojo); box-shadow: none; }
+  .jr__truck { position: absolute; top: -12px; left: 14px; width: 40px; height: 30px; margin-left: -20px; border-radius: 10px; display: grid; place-items: center; background: #fff; color: var(--rojo); box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.5); }
+  .jr__view { overflow: visible; }
+  .jr__track { list-style: none; padding: 0 var(--gutter); margin: 0; display: flex; gap: clamp(16px, 2vw, 32px); width: max-content; will-change: transform; }
+  .jr__panel { width: min(78vw, 1080px); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); gap: clamp(20px, 3vw, 44px); align-items: center; padding: clamp(14px, 1.5vw, 20px); border-radius: 30px; background: var(--asfalto-2); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07); }
+  .jr__media { position: relative; aspect-ratio: 16 / 10; border-radius: 20px; overflow: hidden; background: #1c1d21; }
+  .jr__media img, .jr__media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .jr__n { position: absolute; left: 18px; bottom: 6px; font-size: clamp(4rem, 9vw, 8rem); color: #fff; line-height: 0.8; text-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+  .jr__txt { display: grid; gap: 16px; padding-right: 12px; }
+  .jr__stat { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding-top: 16px; border-top: 1px solid var(--line); }
+  .jr__stat b { font-stretch: 125%; font-weight: 850; font-style: italic; font-size: clamp(2rem, 3.6vw, 3.4rem); line-height: 1; color: var(--brasa); }
+  .jr__stat .mono { color: var(--muted); }
+
+  /* caja 3D (paso 1) */
+  .jr__box { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(70% 70% at 50% 45%, #3a1a1c, #18191c); perspective: 900px; }
+  .cube { --s: clamp(120px, 15vw, 200px); position: relative; width: var(--s); height: var(--s); transform-style: preserve-3d; animation: cube-spin 14s linear infinite; }
+  @keyframes cube-spin { from { transform: rotateX(-22deg) rotateY(0deg); } to { transform: rotateX(-22deg) rotateY(360deg); } }
+  .cube__f { position: absolute; inset: 0; background: linear-gradient(160deg, #d6b07a, #b98f57); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12); display: block; }
+  .cube__front { transform: translateZ(calc(var(--s) / 2)); }
+  .cube__back { transform: rotateY(180deg) translateZ(calc(var(--s) / 2)); }
+  .cube__right { transform: rotateY(90deg) translateZ(calc(var(--s) / 2)); background: linear-gradient(160deg, #c49c63, #a57c45); display: grid; place-items: center; }
+  .cube__left { transform: rotateY(-90deg) translateZ(calc(var(--s) / 2)); background: linear-gradient(160deg, #c49c63, #a57c45); }
+  .cube__top { transform: rotateX(90deg) translateZ(calc(var(--s) / 2)); background: linear-gradient(160deg, #e2c391, #cba56d); }
+  .cube__bottom { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); background: #8f6a39; }
+  .cube__tape { position: absolute; top: 0; bottom: 0; left: 50%; width: 18%; transform: translateX(-50%); background: var(--rojo); }
+  .cube__tape--h { top: 0; bottom: 0; }
+  .cube__label { position: absolute; left: 10%; bottom: 10%; width: 34%; padding: 6px; background: #fff; border-radius: 4px; display: grid; gap: 4px; font-family: var(--mono); font-size: 0.55rem; color: #111; }
+  .cube__label .barcode { height: 16px; }
+  .jr :global(.cube__em) { width: 52%; height: auto; color: #fff; opacity: 0.95; }
+  .jr__shadow { position: absolute; left: 50%; bottom: 14%; width: 40%; height: 18px; margin-left: -20%; border-radius: 50%; background: rgba(0, 0, 0, 0.55); filter: blur(12px); }
+
+  @media (max-width: 900px) {
+    .jr__pin { min-height: 0; padding-block: clamp(80px, 12vw, 120px) 60px; }
+    .jr__head { grid-template-columns: minmax(0, 1fr); }
+    .jr__route { display: none; }
+    .jr__track { flex-direction: column; width: auto; }
+    .jr__panel { width: auto; grid-template-columns: minmax(0, 1fr); }
+  }
+</style>

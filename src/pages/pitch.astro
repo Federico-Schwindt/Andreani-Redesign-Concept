@@ -1,0 +1,564 @@
+---
+/**
+ * Propuesta para Andreani: portada, carta, antes/después, oportunidades, métricas medidas con Lighthouse,
+ * el cotizador en seis pasos, ideas de diseño, celular, implementación, recorrido y contacto.
+ */
+import QRCode from 'qrcode'
+import Base from '../layouts/Base.astro'
+import Icon from '../components/Icon.astro'
+import Lines from '../components/Lines.astro'
+import Emblem from '../components/Emblem.astro'
+import M from '../data/pitch-metrics.json'
+import { url, stats, AUTHOR } from '../lib/site'
+
+const siteUrl = new URL(url('/'), Astro.site).href
+const qr = await QRCode.toString(siteUrl, { type: 'svg', margin: 0, errorCorrectionLevel: 'M', color: { dark: '#ffffff', light: '#0000' } })
+
+type Metric = (typeof M)['home']['old']
+type Row = { k: string; hint: string; old: number; neu: number; unit: string; dec: number; up?: boolean; max?: number }
+const rows = (o: Metric, n: Metric): Row[] => [
+  { k: 'Rendimiento', hint: 'Puntaje de Lighthouse, de 0 a 100', old: o.perf, neu: n.perf, unit: '', dec: 0, up: true, max: 100 },
+  { k: 'Contenido principal visible', hint: 'LCP: cuándo aparece lo más importante', old: o.lcp / 1000, neu: n.lcp / 1000, unit: ' s', dec: 1 },
+  { k: 'Tiempo bloqueado', hint: 'TBT: la página no responde al toque', old: o.tbt, neu: n.tbt, unit: ' ms', dec: 0 },
+  { k: 'Saltos de diseño', hint: 'CLS: cuánto se mueve la página mientras carga', old: o.cls, neu: n.cls, unit: '', dec: 2 },
+  { k: 'Peso total', hint: 'Todo lo que descarga el celular', old: o.bytes / 1e6, neu: n.bytes / 1e6, unit: ' MB', dec: 2 },
+  { k: 'JavaScript', hint: 'Código que el teléfono tiene que ejecutar', old: o.js / 1000, neu: n.js / 1000, unit: ' KB', dec: 0 },
+  { k: 'Solicitudes', hint: 'Archivos que pide la página', old: o.reqs, neu: n.reqs, unit: '', dec: 0 },
+  { k: 'Accesibilidad', hint: 'Contraste, títulos, etiquetas, foco', old: o.a11y, neu: n.a11y, unit: '', dec: 0, up: true, max: 100 },
+  { k: 'Buenas prácticas', hint: 'Seguridad, consola, imágenes', old: o.bp, neu: n.bp, unit: '', dec: 0, up: true, max: 100 },
+]
+const fmt = (v: number, d = 0) => v.toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d })
+const round = (v: number, d: number) => Math.round(v * 10 ** d) / 10 ** d
+const change = (r: Row) => {
+  if (r.up) return `+${fmt(r.neu - r.old)} pts`
+  if (!r.old) return '='
+  const pct = Math.round((1 - r.neu / r.old) * 100)
+  return pct > 0 ? `−${fmt(pct)} %` : `+${fmt(-pct)} %`
+}
+const pages = [
+  { id: 'home', label: 'Inicio', rows: rows(M.home.old, M.home.new), o: M.home.old, n: M.home.new },
+  { id: 'suc', label: 'Buscar sucursal', rows: rows(M.suc.old, M.suc.new), o: M.suc.old, n: M.suc.new },
+]
+const measured = new Date(M.measured + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
+const speedup = (M.home.old.lcp / M.home.new.lcp).toLocaleString('es-AR', { maximumFractionDigits: 0 })
+const lighter = Math.round(M.home.old.bytes / M.home.new.bytes)
+
+const chapters = [
+  ['01', 'Carta', '#carta'],
+  ['02', 'Antes y después', '#antes-despues'],
+  ['03', 'Dónde hay margen', '#margen'],
+  ['04', 'Los números', '#numeros'],
+  ['05', 'El cotizador', '#cotizador'],
+  ['06', 'Ideas de diseño', '#ideas'],
+  ['07', 'Cómo se implementa', '#integracion'],
+  ['08', 'Recorrido', '#recorrido'],
+]
+const pasos = [
+  ['Bultos', 'Paquetería, sobre, vinos o pallets. Filas con cantidad, kilos y medidas, o una planilla CSV con hasta 50 bultos.'],
+  ['Origen', 'Las 3 sucursales reales más cercanas, con distancia y horario, o el retiro a domicilio con fecha.'],
+  ['Destino', 'Entrega a domicilio o retiro en sucursal, con la red real de puntos de atención.'],
+  ['Contacto', 'Email y celular para los avisos, y WhatsApp para el destinatario.'],
+  ['Pago', 'Resumen claro con el total. En el sitio real, acá se abre el checkout.'],
+  ['Etiqueta', 'Se imprime en pantalla con número de envío, código de clasificación y un QR que abre su seguimiento.'],
+]
+const ideas = [
+  { i: 'truck', t: 'Una carga de apertura', d: 'El camión con la librea real entra, se llenan las cajas, la cámara entra en una y las solapas se abren sobre el inicio. Corre en CSS y se muestra una sola vez por sesión.' },
+  { i: 'bolt', t: 'Precios en segundos', d: 'El inicio y la página de envíos llevan al cotizador. Las rutas frecuentes cotizan con un toque y los precios se recalculan en vivo.' },
+  { i: 'pin', t: 'La red, a la vista', d: `Un mapa con ${291} puntos reales de la API pública, hubs que laten y rutas que salen de Pacheco. Buscador por localidad, CP o cercanía.` },
+  { i: 'scan', t: 'Seguimiento que se entiende', d: 'Etapas, eventos y el camión avanzando sobre el mapa. El QR de cada etiqueta abre ese envío.' },
+  { i: 'boxes', t: 'Empresas con peso propio', d: `Los ${stats.empresas.toLocaleString('es-AR')} clientes corporativos y la planta de Pacheco (${stats.porHora.toLocaleString('es-AR')} paquetes por hora) cuentan su historia con video y un formulario directo.` },
+  { i: 'spark', t: 'La marca en movimiento', d: 'Archivo expandida e itálica como el logo, el rojo Andreani, cinta de embalar y etiquetas. Videos propios en bucle que solo cargan cuando se ven.' },
+]
+const tour = [
+  ['Inicio', '/', 'Carga de apertura, hero en video, recorrido horizontal, mapa de la red y cotizador.'],
+  ['Enviar', '/enviar/', 'El cotizador completo, modos de despacho, catálogo y preguntas frecuentes.'],
+  ['Seguir envío', '/seguimiento/?n=360002614871055', 'Etapas, eventos y el camión en el mapa. Probá con el número de ejemplo.'],
+  ['Sucursales', '/sucursales/', '291 puntos reales con filtros, cercanía y cómo llegar.'],
+  ['Empresas', '/empresas/', 'Servicios B2B con video, la planta de Pacheco e industrias.'],
+  ['Nosotros', '/nosotros/', 'De Casilda en 1945 a los 80 años, Brasil y sustentabilidad.'],
+  ['Página 404', '/esta-pagina-no-existe/', 'Hasta el error tiene su caja.'],
+]
+const mail = `mailto:${AUTHOR.email}?subject=${encodeURIComponent('Rediseño web Andreani')}`
+---
+<Base title="Propuesta de rediseño" description="Propuesta de rediseño conceptual para Andreani: antes y después, métricas medidas, el cotizador en seis pasos e implementación.">
+  <!-- ============ PORTADA ============ -->
+  <section class="ph t-dark">
+    <div class="wrap">
+      <div class="ph__grid">
+        <div>
+          <p class="kick">Propuesta de rediseño · Concepto independiente</p>
+          <Lines as="h1" class="dsp d1 ph__t" text="Todo llega.|*Más rápido.*" />
+          <p class="lede" data-rv>Un rediseño completo de andreani.com pensado para vender más envíos: cotizar sin cuenta, reservar en seis pasos y seguir el paquete desde un QR. Construido con datos reales de la red.</p>
+          <div class="ph__cta" data-rv>
+            <a class="btn" href={url('/')}>Ver el sitio <Icon name="arrow" /></a>
+            <a class="btn btn--ghost" href={url('/enviar/#cotizador')}>Probar el cotizador <Icon name="arrow" /></a>
+          </div>
+        </div>
+        <nav class="toc" aria-label="Capítulos" data-rv>
+          <p class="mono toc__h">Contenido</p>
+          <ol>
+            {chapters.map(([n, t, h]) => <li><a href={h}><span class="mono">{n}</span><span class="toc__t">{t}</span><Icon name="arrow" size={18} /></a></li>)}
+          </ol>
+        </nav>
+      </div>
+      <dl class="ph__meta" data-rv>
+        <div><dt class="mono">Para</dt><dd>Andreani Grupo Logístico</dd></div>
+        <div><dt class="mono">De</dt><dd>{AUTHOR.name}</dd></div>
+        <div><dt class="mono">Fecha</dt><dd>{measured}</dd></div>
+        <div><dt class="mono">Alcance</dt><dd>7 páginas navegables</dd></div>
+        <div><dt class="mono">Estado</dt><dd>Concepto, no oficial</dd></div>
+      </dl>
+    </div>
+    <Emblem class="ph__em" />
+  </section>
+
+  <!-- ============ 01 · CARTA ============ -->
+  <section id="carta" class="sec t-light letter">
+    <div class="wrap letter__in">
+      <p class="kick">01 · Carta</p>
+      <div class="letter__body" data-rv>
+        <p class="letter__hi">Hola, equipo de Andreani:</p>
+        <p>Andreani mueve {stats.envios.toLocaleString('es-AR')} millones de envíos al año, llega a cada rincón del país y cumplió 80 años. El sitio es la puerta de entrada para quien quiere mandar un paquete, y hoy esa puerta tiene escalones: para hacer un envío primero hay que iniciar sesión, en un celular el inicio tarda varios segundos en mostrarse y la red, la planta de Pacheco y la historia casi no aparecen.</p>
+        <p>Armé este concepto para mostrar cómo podría sentirse: rápido, claro y con la energía de la marca. Toda la información es real (sucursales, horarios, cifras del reporte 2025), salvo los precios del cotizador, que son una estimación de demostración.</p>
+        <p>No es un trabajo encargado ni oficial. Es una propuesta para conversar.</p>
+        <p class="letter__sign">— {AUTHOR.name}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 · ANTES Y DESPUÉS ============ -->
+  <section id="antes-despues" class="sec t-dark ba">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">02 · Antes y después</p><Lines class="dsp d2" text="Misma marca.|*Otro ritmo.*" /></div>
+        <p class="lede" data-rv>Arrastrá el control para comparar el sitio actual con el rediseño, en la misma pantalla y con la misma página.</p>
+      </div>
+      <div data-tabs>
+        <div class="seg" role="group" aria-label="Página a comparar" data-rv>
+          <button type="button" data-tab="ba-home" aria-pressed="true">Inicio</button>
+          <button type="button" data-tab="ba-suc" aria-pressed="false">Sucursales</button>
+        </div>
+        {[
+          { id: 'ba-home', o: 'old-home', n: 'new-home', om: 'old-m', nm: 'new-m', what: 'la página de inicio' },
+          { id: 'ba-suc', o: 'old-suc', n: 'new-suc', om: 'old-suc-m', nm: 'new-suc-m', what: 'el buscador de sucursales' },
+        ].map((c, i) => (
+          <div class="cmp" data-cmp data-panel={c.id} hidden={i > 0} data-rv>
+            <picture><source media="(max-width: 640px)" srcset={url(`/pitch/${c.om}.avif`)} width="560" height="953" /><img class="cmp__old" src={url(`/pitch/${c.o}.avif`)} srcset={`${url(`/pitch/${c.o}-sm.avif`)} 900w, ${url(`/pitch/${c.o}.avif`)} 1600w`} sizes="(min-width: 1600px) 1480px, 92vw" alt={`Sitio actual: ${c.what}`} width="1600" height="1000" loading="lazy" decoding="async" /></picture>
+            <div class="cmp__new"><picture><source media="(max-width: 640px)" srcset={url(`/pitch/${c.nm}.avif`)} width="560" height="953" /><img src={url(`/pitch/${c.n}.avif`)} srcset={`${url(`/pitch/${c.n}-sm.avif`)} 900w, ${url(`/pitch/${c.n}.avif`)} 1600w`} sizes="(min-width: 1600px) 1480px, 92vw" alt={`Rediseño: ${c.what}`} width="1600" height="1000" loading="lazy" decoding="async" /></picture></div>
+            <div class="cmp__bar" aria-hidden="true"><span class="cmp__tag cmp__tag--l mono">Actual</span><span class="cmp__tag cmp__tag--r mono">Rediseño</span><span class="cmp__knob"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 7-5 5 5 5M15 7l5 5-5 5" /></svg></span></div>
+            <input class="cmp__range" type="range" min="0" max="100" value="50" step="0.5" aria-label={`Comparar ${c.what}: sitio actual a la izquierda, rediseño a la derecha`} />
+          </div>
+        ))}
+      </div>
+      <p class="ba__note mono">Capturas del {measured}: escritorio a 1440 × 900 px y celular a 390 × 664 px. El sitio actual pertenece a Andreani Grupo Logístico.</p>
+    </div>
+  </section>
+
+  <!-- ============ 03 · DÓNDE HAY MARGEN ============ -->
+  <section id="margen" class="sec t-white">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">03 · Dónde hay margen</p><Lines class="dsp d2" text="Lo que funciona|*se queda.*" /></div>
+        <p class="lede" data-rv>La red, la marca y la confianza ya están. Estas son las oportunidades que encontré y cómo las resuelve el rediseño.</p>
+      </div>
+      <ol class="gaps">
+        <li data-rv>
+          <span class="gaps__n dsp">01</span>
+          <h3 class="h3">Cotizar y enviar sin cuenta</h3>
+          <p class="prose">Hoy “Hacer un envío” lleva directo al inicio de sesión. En el rediseño los precios se ven sin registrarse y el envío se arma completo; los datos se piden recién al final.</p>
+        </li>
+        <li data-rv style="--d:90">
+          <span class="gaps__n dsp">02</span>
+          <h3 class="h3">Velocidad en el celular</h3>
+          <p class="prose">En un celular con 4G, el contenido principal del inicio tarda {fmt(round(M.home.old.lcp / 1000, 1), 1)} s en aparecer y la página descarga {fmt(round(M.home.old.bytes / 1e6, 1), 1)} MB. El rediseño lo muestra {speedup} veces antes y pesa {lighter} veces menos.</p>
+        </li>
+        <li data-rv style="--d:180">
+          <span class="gaps__n dsp">03</span>
+          <h3 class="h3">Accesible para todos</h3>
+          <p class="prose">Hoy Lighthouse marca contraste insuficiente, títulos fuera de orden, enlaces sin nombre y botones chicos para tocar. El rediseño los resuelve: el inicio pasa de {M.home.old.a11y} a {M.home.new.a11y} en accesibilidad.</p>
+        </li>
+        <li data-rv style="--d:270">
+          <span class="gaps__n dsp">04</span>
+          <h3 class="h3">Una marca con historia</h3>
+          <p class="prose">80 años, {stats.envios.toLocaleString('es-AR')} M de envíos y una planta que clasifica {stats.porHora.toLocaleString('es-AR')} paquetes por hora. Hoy esa historia vive lejos del inicio; acá la cuenta el propio sitio.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ 04 · LOS NÚMEROS ============ -->
+  <section id="numeros" class="sec t-dark nums">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">04 · Los números</p><Lines class="dsp d2" text="Medido,|*no prometido.*" /></div>
+        <p class="lede" data-rv>Misma herramienta, mismas condiciones: {M.tool}. Cada cifra cuenta desde el valor del sitio actual hasta el del rediseño.</p>
+      </div>
+      <div class="rings">
+        {pages.map((p, i) => (
+          <figure class="ring" data-rv style={`--d:${i * 120};--off:${100 - p.n.perf};--offo:${100 - p.o.perf}`}>
+            <div class="ring__g">
+              <svg viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="ring__t" cx="60" cy="60" r="52" pathLength="100" />
+                <circle class="ring__v" cx="60" cy="60" r="52" pathLength="100" />
+                <circle class="ring__to" cx="60" cy="60" r="40" pathLength="100" />
+                <circle class="ring__o" cx="60" cy="60" r="40" pathLength="100" />
+              </svg>
+              <p class="ring__c"><span class="ring__n" data-count={p.n.perf}>{p.n.perf}</span><small class="mono">de 100</small></p>
+            </div>
+            <figcaption><strong>{p.label}</strong><span>Rendimiento móvil · actual {p.o.perf}, rediseño {p.n.perf}</span></figcaption>
+          </figure>
+        ))}
+        <div class="rings__legend" data-rv style="--d:240">
+          <p class="key"><i class="key__n"></i>Rediseño</p>
+          <p class="key"><i class="key__o"></i>Sitio actual</p>
+          <p class="rings__big"><span class="dsp">×{speedup}</span> más rápido en mostrar el contenido principal del inicio.</p>
+        </div>
+      </div>
+
+      <div data-tabs class="ledger-wrap">
+        <div class="ledger-top">
+          <div class="seg" role="group" aria-label="Página medida">
+            {pages.map((p, i) => <button type="button" data-tab={`m-${p.id}`} aria-pressed={i === 0 ? 'true' : 'false'}>{p.label}</button>)}
+          </div>
+          <div class="ledger-key" aria-hidden="true"><span class="key"><i class="key__o"></i>Sitio actual</span><span class="key"><i class="key__n"></i>Rediseño</span></div>
+        </div>
+        {pages.map((p, i) => (
+          <table class="ledger" data-panel={`m-${p.id}`} hidden={i > 0}>
+            <caption class="sr-only">{p.label}: sitio actual comparado con el rediseño</caption>
+            <thead><tr><th scope="col">Métrica</th><th scope="col">Sitio actual y rediseño</th><th scope="col">Cambio</th></tr></thead>
+            <tbody>
+              {p.rows.map((r) => {
+                const max = r.max ?? Math.max(r.old, r.neu, 0.0001)
+                return (
+                  <tr>
+                    <th scope="row">{r.k}<small>{r.hint}</small></th>
+                    <td class="ledger__bars">
+                      <div class="b b--o"><i style={`--w:${((r.old / max) * 100).toFixed(1)}`}></i><span><span class="sr-only">Actual: </span>{fmt(round(r.old, r.dec), r.dec)}{r.unit}</span></div>
+                      <div class="b b--n"><i style={`--w:${((r.neu / max) * 100).toFixed(1)}`}></i><span><span class="sr-only">Rediseño: </span>{fmt(round(r.neu, r.dec), r.dec)}{r.unit}</span></div>
+                    </td>
+                    <td class="ledger__d">{change(r)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        ))}
+        <p class="ledger__note">Medición del {measured} con Lighthouse sobre el sitio publicado, perfil móvil (Moto G Power, 4G lenta simulada). El rediseño tiene la indexación desactivada a propósito por ser un concepto, por eso no se compara SEO.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 05 · EL COTIZADOR ============ -->
+  <section id="cotizador" class="sec t-light qx">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">05 · El cotizador</p><Lines class="dsp d2" text="De la ruta|*a la etiqueta.*" /></div>
+        <p class="lede" data-rv>La pieza que más vende. Inspirado en los cotizadores instantáneos de la logística digital: precios en segundos, sin registrarse, y la reserva completa en el mismo lugar.</p>
+      </div>
+      <div class="qx__grid">
+        <figure class="qx__shot" data-rv>
+          <img src={url('/pitch/quote.avif')} srcset={`${url('/pitch/quote-sm.avif')} 900w, ${url('/pitch/quote.avif')} 1600w`} sizes="(min-width: 1100px) 60vw, 92vw" alt="Cotizador del rediseño con la ruta Rosario a Ushuaia trazada en el mapa y los precios Estándar y Prioritario" width="1600" height="1471" loading="lazy" decoding="async" />
+        </figure>
+        <ol class="qx__steps">
+          {pasos.map(([t, d], i) => (
+            <li data-rv style={`--d:${i * 60}`}><span class="qx__n mono">{i + 1}</span><div><b>{t}</b><p>{d}</p></div></li>
+          ))}
+        </ol>
+      </div>
+      <ul class="qx__chips" data-rv>
+        <li>Localidades reales con autocompletado</li>
+        <li>Precios que se recalculan en vivo</li>
+        <li>Rutas frecuentes en un toque</li>
+        <li>Planilla CSV de hasta 50 bultos</li>
+        <li>Peso volumétrico explicado</li>
+        <li>Sucursales reales con horario</li>
+        <li>QR que abre el seguimiento</li>
+      </ul>
+      <figure class="qx__label" data-rv>
+        <img src={url('/pitch/label.avif')} alt="Etiqueta generada al final de la reserva, con número de envío, código de destino, código de barras y QR" width="1200" height="793" loading="lazy" decoding="async" />
+        <figcaption class="mono">La etiqueta del paso 6. El QR abre el seguimiento de ese mismo envío.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ 06 · IDEAS DE DISEÑO ============ -->
+  <section id="ideas" class="sec t-dark">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">06 · Ideas de diseño</p><Lines class="dsp d2" text="Cada detalle|*empuja.*" /></div>
+        <p class="lede" data-rv>Animación con propósito: cada movimiento cuenta algo de la logística y nada frena la carga.</p>
+      </div>
+      <ul class="ideas">
+        {ideas.map((x, i) => (
+          <li data-rv style={`--d:${(i % 3) * 80}`}><span class="ideas__i"><Icon name={x.i} size={26} /></span><h3 class="h3">{x.t}</h3><p class="prose">{x.d}</p></li>
+        ))}
+      </ul>
+      <div class="phones" data-rv>
+        <figure><img src={url('/pitch/old-m.avif')} alt="Sitio actual en un celular" width="560" height="953" loading="lazy" decoding="async" /><figcaption class="mono">Actual</figcaption></figure>
+        <figure class="phones__new"><img src={url('/pitch/new-m.avif')} alt="Rediseño en un celular" width="560" height="953" loading="lazy" decoding="async" /><figcaption class="mono">Rediseño</figcaption></figure>
+        <p class="phones__t">Pensado primero para el celular: videos verticales propios, el panel de seguimiento al alcance del pulgar y un menú que se abre en un círculo rojo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 07 · IMPLEMENTACIÓN ============ -->
+  <section id="integracion" class="sec t-white">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">07 · Cómo se implementa</p><Lines class="dsp d2" text="Sobre lo|*que ya existe.*" /></div>
+        <p class="lede" data-rv>Sin cambiar de proveedores. El diseño se monta sobre las herramientas y los datos que Andreani ya usa.</p>
+      </div>
+      <ol class="impl">
+        <li data-rv><span class="mono">Contenidos</span><h3 class="h3">Storyblok, como hoy</h3><p class="prose">El sitio actual carga sus textos e íconos desde Storyblok. Cada sección del rediseño se vuelve un bloque editable para el equipo de marketing.</p></li>
+        <li data-rv style="--d:80"><span class="mono">Interfaz</span><h3 class="h3">Next.js o estático</h3><p class="prose">Se puede integrar al Next.js actual o publicarse estático, como este prototipo hecho en Astro: el inicio corre con {fmt(Math.round(M.home.new.js / 1000))} KB de JavaScript.</p></li>
+        <li data-rv style="--d:160"><span class="mono">Datos</span><h3 class="h3">Las APIs de Andreani</h3><p class="prose">El buscador ya usa la API pública de sucursales. El cotizador y la etiqueta se conectan a la API para integradores que usan las tiendas online (cotización, órdenes, etiquetas y seguimiento) en lugar del modelo de demo.</p></li>
+        <li data-rv style="--d:240"><span class="mono">Localidades</span><h3 class="h3">Georef, datos abiertos</h3><p class="prose">El autocompletado usa el servicio de normalización geográfica del Estado argentino, gratuito y con todas las localidades del país.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ 08 · RECORRIDO ============ -->
+  <section id="recorrido" class="sec--sm t-light">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">08 · Recorrido</p><Lines class="dsp d2" text="Navegalo|*vos.*" /></div>
+        <p class="lede" data-rv>Siete páginas completas, en escritorio y en celular.</p>
+      </div>
+      <ol class="tour">
+        {tour.map(([t, h, d], i) => (
+          <li data-rv style={`--d:${(i % 4) * 60}`}><a href={url(h)}><span class="mono">{String(i + 1).padStart(2, '0')}</span><b class="h3">{t}</b><span class="tour__d">{d}</span><Icon name="arrow" size={20} /></a></li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ CONTACTO ============ -->
+  <section id="contacto" class="sec t-red end">
+    <div class="wrap end__grid">
+      <div>
+        <p class="kick">¿Seguimos?</p>
+        <Lines class="dsp end__t" text="¿Lo|charlamos?" />
+        <p class="lede" data-rv>Si les interesa avanzar, puedo presentar la propuesta, adaptarla a su stack y estimar tiempos de implementación.</p>
+        <div class="end__cta" data-rv>
+          <a class="btn btn--light" href={mail}>{AUTHOR.email} <Icon name="arrow" /></a>
+          <a class="btn btn--ghost" href={AUTHOR.portfolio} target="_blank" rel="noopener">Ver portfolio <Icon name="ne" /></a>
+        </div>
+      </div>
+      <figure class="end__qr" data-rv>
+        <div set:html={qr} />
+        <figcaption class="mono">Escaneá para abrir el sitio en tu celular</figcaption>
+      </figure>
+    </div>
+    <p class="wrap end__legal">Concepto independiente de {AUTHOR.name}, sin afiliación con Andreani Grupo Logístico. La marca, el logotipo y la librea pertenecen a sus dueños y se usan solo para ilustrar la propuesta. Los precios del cotizador son estimaciones de demostración. Cifras de la red: Reporte de Sustentabilidad Andreani 2025.</p>
+  </section>
+</Base>
+
+<script>
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+  // Pestañas simples (antes/después y métricas)
+  document.querySelectorAll<HTMLElement>('[data-tabs]').forEach((g) => {
+    const btns = g.querySelectorAll<HTMLButtonElement>('[data-tab]')
+    btns.forEach((b) => b.addEventListener('click', () => {
+      btns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+      g.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => {
+        p.hidden = p.dataset.panel !== b.dataset.tab
+        if (!p.hidden) [p, ...p.querySelectorAll('[data-rv]')].forEach((el) => el.classList.add('in'))
+      })
+    }))
+  })
+  // Comparador antes/después, con una pista de arrastre la primera vez que aparece
+  document.querySelectorAll<HTMLElement>('[data-cmp]').forEach((c) => {
+    const r = c.querySelector<HTMLInputElement>('.cmp__range')!
+    const set = (v: number) => c.style.setProperty('--x', `${v}%`)
+    r.addEventListener('input', () => set(+r.value))
+    if (reduced) return
+    let touched = false
+    r.addEventListener('pointerdown', () => (touched = true), { once: true })
+    const io = new IntersectionObserver((es) => {
+      if (!es[0].isIntersecting || touched) return
+      io.disconnect()
+      const t0 = performance.now() + 500, dur = 1600
+      const tick = (t: number) => {
+        if (touched) return
+        const k = Math.max(0, Math.min(1, (t - t0) / dur)), e = 1 - Math.pow(1 - k, 3)
+        const v = 82 + (50 - 82) * e
+        set(v); r.value = String(v)
+        if (k < 1) requestAnimationFrame(tick)
+      }
+      set(82); requestAnimationFrame(tick)
+    }, { threshold: 0.5 })
+    io.observe(c)
+  })
+</script>
+
+<style>
+  /* Portada */
+  .ph { position: relative; overflow: hidden; padding-top: calc(var(--hdr) + clamp(48px, 7vw, 110px)); padding-bottom: clamp(48px, 6vw, 90px); }
+  .ph__grid { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.7fr); gap: clamp(32px, 6vw, 110px); align-items: end; }
+  .ph__t { margin-top: 22px; }
+  .ph .lede { margin-top: 28px; }
+  .ph__cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+  .ph :global(.ph__em) { position: absolute; right: -6vw; top: 8%; width: min(58vw, 900px); height: auto; color: var(--rojo); opacity: 0.12; pointer-events: none; }
+  .toc { border-top: 1px solid var(--line); }
+  .toc__h { color: var(--brasa); padding: 18px 0 8px; }
+  .toc ol { list-style: none; padding: 0; }
+  .toc a { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); transition: color 0.3s, padding 0.5s var(--ease); }
+  .toc a:hover { color: var(--brasa); padding-left: 6px; }
+  .toc .mono { width: 2.4em; color: var(--muted); }
+  .toc__t { flex: 1; font-stretch: 110%; font-weight: 650; }
+  .ph__meta { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: clamp(48px, 6vw, 90px); border-top: 1px solid var(--line); }
+  .ph__meta div { padding: 18px 18px 0 0; }
+  .ph__meta div + div { padding-left: 18px; border-left: 1px solid var(--line); }
+  .ph__meta dt { color: var(--muted); }
+  .ph__meta dd { margin-top: 6px; font-stretch: 110%; font-weight: 650; }
+
+  /* Carta */
+  .letter__in { display: grid; grid-template-columns: minmax(0, 0.5fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+  .letter__body { display: grid; gap: 18px; font-size: clamp(1.1rem, 1rem + 0.45vw, 1.35rem); line-height: 1.6; max-width: 60ch; }
+  .letter__hi { font-stretch: 112%; font-weight: 800; font-size: 1.4em; }
+  .letter__sign { font-stretch: 125%; font-weight: 850; font-style: italic; color: var(--rojo); }
+
+  /* Antes y después */
+  .seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); box-shadow: inset 0 0 0 1px var(--line); margin-bottom: 22px; }
+  .seg button { height: 42px; padding: 0 18px; border-radius: 999px; font-weight: 650; font-size: 0.92rem; color: var(--muted); transition: background-color 0.3s, color 0.3s; }
+  .seg button[aria-pressed='true'] { background: var(--rojo); color: #fff; }
+  .t-white .seg, .t-light .seg { background: rgba(15, 16, 18, 0.05); }
+  .cmp { --x: 50%; position: relative; border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 1px var(--line), 0 60px 120px -60px rgba(0, 0, 0, 0.9); aspect-ratio: 16 / 10; user-select: none; }
+  .cmp img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .cmp__new { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--x)); }
+  .cmp__bar { position: absolute; top: 0; bottom: 0; left: var(--x); width: 3px; margin-left: -1.5px; background: var(--rojo); pointer-events: none; }
+  .cmp__knob { position: absolute; top: 50%; left: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; display: grid; place-items: center; background: var(--rojo); color: #fff; box-shadow: 0 10px 30px -6px rgba(0, 0, 0, 0.6); }
+  .cmp__tag { position: absolute; top: 16px; padding: 7px 12px; border-radius: 999px; white-space: nowrap; background: rgba(15, 16, 18, 0.82); color: #fff; }
+  .cmp__tag--l { right: 14px; }
+  .cmp__tag--r { left: 14px; background: var(--rojo); }
+  .cmp__range { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
+  .cmp__range:focus-visible + * { outline: none; }
+  .cmp:has(.cmp__range:focus-visible) { outline: 3px solid var(--brasa); outline-offset: 4px; }
+  .ba__note { margin-top: 18px; color: var(--muted); text-transform: none; letter-spacing: 0.02em; }
+
+  /* Margen */
+  .gaps { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(16px, 2vw, 28px); }
+  .gaps li { display: grid; align-content: start; gap: 14px; padding-top: 22px; border-top: 3px solid var(--rojo); }
+  .gaps__n { font-size: clamp(2.6rem, 4vw, 4rem); color: var(--rojo); }
+
+  /* Números */
+  .rings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 1.1fr); gap: clamp(20px, 3vw, 48px); align-items: center; margin-bottom: clamp(48px, 6vw, 90px); }
+  .ring { display: grid; justify-items: center; gap: 16px; text-align: center; }
+  .ring__g { position: relative; width: min(100%, 260px); aspect-ratio: 1; }
+  .ring__g svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-linecap: round; }
+  .ring__t { stroke: rgba(255, 255, 255, 0.08); stroke-width: 10; }
+  .ring__v { stroke: var(--brasa); stroke-width: 10; stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset 1.8s var(--ease) 0.2s; }
+  .ring__to { stroke: rgba(255, 255, 255, 0.06); stroke-width: 6; }
+  .ring__o { stroke: rgba(244, 242, 238, 0.45); stroke-width: 6; stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset 1.8s var(--ease) 0.4s; }
+  .ring.in .ring__v { stroke-dashoffset: var(--off); }
+  .ring.in .ring__o { stroke-dashoffset: var(--offo); }
+  .ring__c { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; }
+  .ring__n { font-stretch: 125%; font-weight: 850; font-style: italic; font-size: clamp(3rem, 6vw, 5rem); line-height: 1; }
+  .ring__c small { color: var(--muted); }
+  .ring figcaption { display: grid; gap: 4px; }
+  .ring figcaption strong { font-stretch: 112%; font-size: 1.15rem; }
+  .ring figcaption span { color: var(--muted); font-size: 0.9rem; }
+  .rings__legend { display: grid; gap: 12px; }
+  .key { display: inline-flex; align-items: center; gap: 10px; font-size: 0.92rem; color: var(--muted); }
+  .key i { width: 22px; height: 6px; border-radius: 6px; }
+  .key__n { background: var(--brasa); }
+  .key__o { background: rgba(244, 242, 238, 0.45); }
+  .rings__big { margin-top: 12px; font-size: clamp(1.1rem, 1rem + 0.5vw, 1.4rem); line-height: 1.35; max-width: 22ch; }
+  .rings__big .dsp { display: block; font-size: clamp(4rem, 8vw, 7.5rem); color: var(--brasa); line-height: 0.9; }
+  .ledger-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .ledger-key { display: flex; gap: 18px; margin-bottom: 22px; }
+  .ledger { width: 100%; border-collapse: collapse; }
+  .ledger th, .ledger td { text-align: left; padding: 16px 12px 16px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .ledger thead th { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .ledger tbody th { width: 30%; font-weight: 700; }
+  .ledger tbody th small { display: block; margin-top: 2px; font-weight: 400; font-size: 0.82rem; color: var(--muted); }
+  .ledger__bars { display: grid; gap: 6px; }
+  .b { display: grid; grid-template-columns: minmax(0, 1fr) 96px; align-items: center; gap: 12px; }
+  .b i { height: 10px; border-radius: 10px; width: calc(var(--w) * 1%); min-width: 4px; }
+  .b--o i { background: rgba(244, 242, 238, 0.4); }
+  .b--n i { background: var(--brasa); }
+  .b span { font-family: var(--mono); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+  .b--n span { color: #fff; font-weight: 700; }
+  .ledger__d { width: 110px; text-align: right !important; font-stretch: 125%; font-weight: 850; font-style: italic; color: var(--brasa); font-size: 1.1rem; white-space: nowrap; }
+  .ledger__note { margin-top: 18px; color: var(--muted); font-size: 0.84rem; max-width: 90ch; }
+
+  /* Cotizador */
+  .qx__grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 64px); align-items: start; }
+  .qx__shot { border-radius: 24px; overflow: hidden; box-shadow: 0 60px 120px -50px rgba(15, 16, 18, 0.55), 0 0 0 1px rgba(15, 16, 18, 0.08); background: var(--asfalto); }
+  .qx__shot img { width: 100%; }
+  .qx__steps { list-style: none; padding: 0; display: grid; gap: 4px; counter-reset: s; }
+  .qx__steps li { display: grid; grid-template-columns: 40px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .qx__n { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--rojo); color: #fff; font-size: 0.8rem; }
+  .qx__steps b { font-stretch: 112%; font-size: 1.15rem; }
+  .qx__steps p { color: var(--muted); font-size: 0.95rem; margin-top: 2px; }
+  .qx__chips { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; margin-top: clamp(28px, 4vw, 48px); }
+  .qx__chips li { padding: 10px 16px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--line); font-weight: 600; font-size: 0.92rem; }
+  .qx__chips li::before { content: '✓'; color: var(--rojo); font-weight: 800; margin-right: 8px; }
+  .qx__label { display: grid; justify-items: center; gap: 14px; margin-top: clamp(40px, 5vw, 72px); }
+  .qx__label img { width: min(100%, 560px); border-radius: 20px; box-shadow: 0 50px 100px -40px rgba(15, 16, 18, 0.5); transform: rotate(-2deg); }
+  .qx__label figcaption { color: var(--muted); text-transform: none; letter-spacing: 0.02em; }
+
+  /* Ideas */
+  .ideas { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .ideas li { display: grid; align-content: start; gap: 12px; padding: clamp(20px, 2.4vw, 32px); border-radius: 24px; background: var(--asfalto-2); box-shadow: inset 0 0 0 1px var(--line); }
+  .ideas__i { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: rgba(215, 25, 32, 0.16); color: var(--brasa); }
+  .phones { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 260px) minmax(0, 1fr); gap: clamp(16px, 3vw, 48px); align-items: center; margin-top: clamp(56px, 7vw, 110px); }
+  .phones figure { display: grid; gap: 12px; justify-items: center; }
+  .phones img { width: 100%; border-radius: 34px; border: 8px solid #2a2b30; box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.8); }
+  .phones__new img { border-color: var(--rojo); }
+  .phones figcaption { color: var(--muted); }
+  .phones__t { font-size: clamp(1.15rem, 1rem + 0.6vw, 1.5rem); line-height: 1.45; max-width: 30ch; }
+
+  /* Implementación */
+  .impl { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .impl li { display: grid; align-content: start; gap: 12px; padding: clamp(20px, 2.4vw, 30px); border-radius: 24px; background: var(--hueso); }
+  .impl .mono { color: var(--rojo); }
+
+  /* Recorrido */
+  .tour { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 clamp(24px, 4vw, 64px); }
+  .tour a { display: grid; grid-template-columns: 40px minmax(0, 0.6fr) minmax(0, 1fr) 24px; gap: 16px; align-items: center; padding: 22px 0; border-bottom: 1px solid var(--line); transition: padding 0.5s var(--ease), color 0.3s; }
+  .tour a:hover { padding-left: 8px; color: var(--rojo); }
+  .tour .mono { color: var(--muted); }
+  .tour__d { color: var(--muted); font-size: 0.92rem; }
+
+  /* Contacto */
+  .end__grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(32px, 6vw, 96px); align-items: end; }
+  .end :global(.end__t) { font-size: clamp(2.2rem, 0.6rem + 7.4vw, 9rem); }
+  .end .lede { margin-top: 26px; }
+  .end__cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+  .end__qr { display: grid; gap: 12px; justify-items: center; padding: 22px; border-radius: 24px; background: rgba(15, 16, 18, 0.18); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25); }
+  .end__qr div { width: 170px; height: 170px; }
+  .end__qr :global(svg) { width: 100%; height: 100%; }
+  .end__qr figcaption { max-width: 20ch; text-align: center; color: rgba(255, 255, 255, 0.86); }
+  .end__legal { margin-top: clamp(48px, 6vw, 90px); font-size: 0.82rem; color: rgba(255, 255, 255, 0.78); max-width: 110ch; }
+
+  @media (max-width: 1100px) {
+    .ph__grid { grid-template-columns: minmax(0, 1fr); }
+    .gaps, .impl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rings__legend { grid-column: 1 / -1; }
+    .qx__grid { grid-template-columns: minmax(0, 1fr); }
+    .ideas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .phones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .phones__t { grid-column: 1 / -1; }
+    .tour { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 760px) {
+    .ph__meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ph__meta div, .ph__meta div + div { padding: 14px 12px 14px 0; border-left: 0; border-bottom: 1px solid var(--line); }
+    .letter__in { grid-template-columns: minmax(0, 1fr); }
+    .gaps, .impl, .ideas { grid-template-columns: minmax(0, 1fr); }
+    .cmp { aspect-ratio: 560 / 953; }
+    .rings { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+    .ledger thead { display: none; }
+    .ledger tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .ledger th, .ledger td { border: 0; padding: 0; width: auto !important; }
+    .ledger__bars { grid-column: 1 / -1; grid-row: 2; }
+    .b { grid-template-columns: minmax(0, 1fr) 84px; }
+    .tour a { grid-template-columns: 32px minmax(0, 1fr) 20px; }
+    .tour__d { grid-column: 2; grid-row: 2; }
+    .end__grid { grid-template-columns: minmax(0, 1fr); }
+    .end__qr { justify-self: start; }
+  }
+</style>

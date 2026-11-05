@@ -1,0 +1,67 @@
+---
+import Icon from '../Icon.astro'
+import Lines from '../Lines.astro'
+import { media, url, servicios, industrias, stats } from '../../lib/site'
+---
+<section class="biz t-dark" id="empresas" aria-labelledby="biz-t">
+  <div class="biz__bg" aria-hidden="true">
+    <img src={media('centro.avif')} alt="" width="1280" height="715" loading="lazy" decoding="async" />
+    <video muted loop playsinline preload="none" data-src={media('centro.mp4')}></video>
+  </div>
+  <div class="wrap biz__in">
+    <div class="biz__head">
+      <p class="kick">Para empresas</p>
+      <Lines as="h2" class="dsp d1" text="Tu negocio,|*en movimiento.*" />
+      <p class="lede" data-rv>{stats.empresas.toLocaleString('es-AR')} empresas y más de {stats.pymes.toLocaleString('es-AR')} pymes y emprendedores confían su logística en la red líder del país.</p>
+      <div class="biz__cta" data-rv><a class="btn" href={url('/empresas/')}>Conocé las soluciones <Icon name="arrow" /></a><a class="btn btn--ghost" href={url('/empresas/#contacto')}>Hablar con un ejecutivo</a></div>
+    </div>
+    <div class="biz__grid">
+      {servicios.map((s, i) => (
+        <a class="svc" href={url(`/empresas/#${s.k}`)} data-rv style={`--d:${(i % 3) * 90}`} data-svc>
+          <span class="svc__media" aria-hidden="true">
+            <img src={media(`${s.video}-sm.avif`)} alt="" width="720" height="402" loading="lazy" decoding="async" />
+            <video muted loop playsinline preload="none" data-src={media(`${s.video}.mp4`)} data-manual></video>
+          </span>
+          <span class="svc__body">
+            <span class="mono svc__n">0{i + 1}</span>
+            <span class="h3">{s.t}</span>
+            <span class="svc__d">{s.d}</span>
+            <span class="svc__stat mono">{s.stat}</span>
+          </span>
+        </a>
+      ))}
+    </div>
+  </div>
+  <div class="biz__ind" aria-label="Industrias">
+    {[0, 1].map((k) => <div class="biz__track" aria-hidden={k === 1 ? 'true' : undefined}>{industrias.map((t) => <span>{t}</span>)}</div>)}
+  </div>
+</section>
+
+<style>
+  .biz { position: relative; overflow: hidden; isolation: isolate; padding-top: clamp(100px, 12vw, 190px); }
+  .biz__bg { position: absolute; inset: 0 0 auto 0; height: 90vh; z-index: -1; }
+  .biz__bg img, .biz__bg video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .biz__bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15, 16, 18, 0.55), rgba(15, 16, 18, 0.75) 50%, var(--asfalto) 100%); }
+  .biz__head { max-width: 980px; }
+  .biz__head .kick { margin-bottom: 22px; }
+  .biz__head .d1 { font-size: clamp(2.8rem, 1rem + 6.6vw, 8.4rem); }
+  .biz__head .lede { margin-top: 26px; color: rgba(244, 242, 238, 0.82); }
+  .biz__cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+  .biz__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: clamp(60px, 8vw, 120px); }
+  .svc { display: grid; grid-template-rows: auto 1fr; border-radius: 26px; overflow: hidden; background: var(--asfalto-2); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07); transition: transform 0.6s var(--ease), box-shadow 0.4s; }
+  .svc:hover { transform: translateY(-6px); box-shadow: inset 0 0 0 1px rgba(255, 77, 61, 0.5), 0 40px 80px -40px rgba(215, 25, 32, 0.45); }
+  .svc__media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+  .svc__media img, .svc__media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 1s var(--ease), opacity 0.4s; }
+  .svc__media video { opacity: 0; }
+  .svc.is-playing .svc__media video { opacity: 1; }
+  .svc:hover .svc__media img { transform: scale(1.06); }
+  .svc__body { display: flex; flex-direction: column; gap: 10px; padding: 22px 24px 24px; }
+  .svc__n { color: var(--brasa); }
+  .svc__d { color: var(--muted); font-size: 0.95rem; }
+  .svc__stat { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); color: #fff; }
+  .biz__ind { display: flex; overflow: hidden; margin-top: clamp(60px, 7vw, 110px); padding-block: 26px; border-top: 1px solid var(--line); }
+  .biz__track { display: flex; flex: none; gap: 14px; padding-right: 14px; animation: tape 60s linear infinite; }
+  .biz__track span { white-space: nowrap; padding: 12px 22px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line); font-stretch: 112%; font-weight: 650; }
+  @media (max-width: 1000px) { .biz__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 600px) { .biz__grid { grid-template-columns: minmax(0, 1fr); } }
+</style>

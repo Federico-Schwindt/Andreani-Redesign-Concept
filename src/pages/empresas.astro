@@ -1,0 +1,172 @@
+---
+import Base from '../layouts/Base.astro'
+import PageHead from '../components/PageHead.astro'
+import Icon from '../components/Icon.astro'
+import Lines from '../components/Lines.astro'
+import { media, servicios, industrias, stats } from '../lib/site'
+const nums = [
+  { v: stats.empresas, l: 'empresas trabajan con Andreani', pre: '+' },
+  { v: stats.superficie, l: 'm² de superficie operativa en Argentina' },
+  { v: stats.unidades, l: 'millones de unidades gestionadas en almacenes' },
+  { v: stats.crossBorder, dec: 1, l: 'millones de envíos cross-border' },
+]
+const rubros = ['Retail y consumo masivo', 'Salud y farma', 'Tecnología', 'Moda', 'Financiero', 'Industria', 'Otro']
+---
+<Base title="Soluciones para empresas" description="Logística integral, almacenes, e-commerce, salud, aérea y distribución nacional con la red líder de la Argentina. Concepto de rediseño para Andreani.">
+  <PageHead crumb="Empresas" kick="Para empresas" title="Tu negocio,|*en movimiento.*" lede="Distribución física, almacenes y logística inversa en una sola operación, con la tecnología del hub más automatizado del país." video="centro">
+    <div class="eh__cta" data-rv style="--d:400">
+      <a class="btn" href="#contacto">Quiero asesoramiento <Icon name="arrow" /></a>
+      <a class="btn btn--ghost" href="#servicios">Ver soluciones</a>
+    </div>
+  </PageHead>
+
+  <section class="t-red sec--sm" aria-label="Andreani en números">
+    <div class="wrap en">
+      {nums.map((n, i) => (
+        <div class="en__it" data-rv style={`--d:${i * 80}`}>
+          <p class="dsp en__v">{n.pre}<span data-count={n.v} data-dec={n.dec ?? 0}>{n.v.toLocaleString('es-AR')}</span></p>
+          <p>{n.l}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="sec t-light" id="servicios" aria-labelledby="sv-t">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">Soluciones</p><Lines as="h2" class="dsp d2" text="Una operación,|*de punta a punta.*" /></div>
+        <p class="lede" data-rv id="sv-t">Elegí un servicio o integralos todos. Un solo equipo, una sola trazabilidad.</p>
+      </div>
+      <div class="sv">
+        {servicios.map((s, i) => (
+          <article class:list={['sv__row', { 'sv__row--rev': i % 2 }]} id={s.k}>
+            <div class="sv__media" data-rv>
+              <img src={media(`${s.video}.avif`)} alt="" width="1280" height="715" loading="lazy" decoding="async" />
+              <video muted loop playsinline preload="none" data-src={media(`${s.video}.mp4`)} aria-hidden="true"></video>
+              <span class="sv__n dsp">0{i + 1}</span>
+            </div>
+            <div class="sv__txt" data-rv style="--d:120">
+              <h3 class="dsp d3">{s.t}</h3>
+              <p class="lede">{s.d}</p>
+              <p class="sv__stat mono"><Icon name="spark" size={16} /> {s.stat}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="pch t-dark" aria-labelledby="pch-t">
+    <div class="pch__bg" aria-hidden="true">
+      <img src={media('hub.avif')} alt="" width="1280" height="715" loading="lazy" decoding="async" />
+      <video muted loop playsinline preload="none" data-src={media('hub.mp4')}></video>
+    </div>
+    <div class="wrap pch__in">
+      <p class="kick">Planta Pacheco</p>
+      <p class="dsp pch__big"><span data-count={stats.porHora} data-dur="2200">{stats.porHora.toLocaleString('es-AR')}</span></p>
+      <h2 class="dsp d3" id="pch-t">envíos por hora, con inducción por <em>inteligencia artificial.</em></h2>
+      <p class="lede" data-rv>El hub más automatizado del país clasifica cada paquete sin intervención manual y lo deja listo para salir a cualquier destino.</p>
+    </div>
+  </section>
+
+  <section class="sec t-white" id="industrias" aria-labelledby="ind-t">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">Industrias</p><Lines as="h2" class="dsp d2" text="Especialistas|*en tu rubro.*" /></div>
+        <p class="lede" data-rv id="ind-t">Segmentos con procesos, certificaciones y equipos dedicados.</p>
+      </div>
+      <ul class="ind">
+        {industrias.map((t, i) => <li data-rv style={`--d:${(i % 4) * 60}`}><span class="mono">{String(i + 1).padStart(2, '0')}</span>{t}<Icon name="arrow" size={18} /></li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec t-dark" id="contacto" aria-labelledby="ct-t">
+    <div class="wrap ct">
+      <div>
+        <p class="kick">Asesoramiento comercial</p>
+        <Lines as="h2" class="dsp d2" text="Armemos tu|*solución.*" />
+        <p class="lede" data-rv style="margin-top:22px">Completá el formulario y un ejecutivo comercial te contacta con una propuesta a medida.</p>
+        <ul class="ct__pts" data-rv>
+          <li><Icon name="check" size={18} /> Diagnóstico de tu operación actual</li>
+          <li><Icon name="check" size={18} /> Integración por API con tu sistema o tienda</li>
+          <li><Icon name="check" size={18} /> Un ejecutivo de cuenta dedicado</li>
+        </ul>
+      </div>
+      <form class="ct__form" data-lead novalidate>
+        <div class="ct__row">
+          <label class="field"><span>Razón social</span><input class="input" name="rs" required autocomplete="organization" /></label>
+          <label class="field"><span>CUIT</span><input class="input" name="cuit" required inputmode="numeric" placeholder="30-12345678-9" /></label>
+        </div>
+        <div class="ct__row">
+          <label class="field"><span>Rubro</span><select class="input" name="rubro">{rubros.map((r) => <option>{r}</option>)}</select></label>
+          <label class="field"><span>Envíos por mes</span><select class="input" name="vol"><option>Menos de 100</option><option>100 a 1.000</option><option>1.000 a 10.000</option><option>Más de 10.000</option></select></label>
+        </div>
+        <div class="ct__row">
+          <label class="field"><span>Nombre y apellido</span><input class="input" name="nombre" required autocomplete="name" /></label>
+          <label class="field"><span>Email</span><input class="input" name="email" type="email" required autocomplete="email" /></label>
+        </div>
+        <label class="field"><span>¿Qué necesitás?</span><textarea class="input" name="msg" rows="4"></textarea></label>
+        <button class="btn" type="submit">Enviar solicitud <Icon name="arrow" /></button>
+        <p class="mono ct__fine" data-lead-msg>Demo: el formulario no envía datos.</p>
+      </form>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .eh__cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+  .en { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+  .en__it { display: grid; gap: 8px; padding-top: 18px; border-top: 2px solid rgba(255, 255, 255, 0.45); }
+  .en__v { font-size: clamp(2.2rem, 3.8vw, 4.2rem); line-height: 0.9; }
+  .sv { display: grid; gap: clamp(60px, 8vw, 130px); }
+  .sv__row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: clamp(24px, 5vw, 80px); align-items: center; scroll-margin-top: 110px; }
+  .sv__row--rev .sv__media { order: 2; }
+  .sv__media { position: relative; aspect-ratio: 16 / 10; border-radius: 28px; overflow: hidden; background: #1c1d21; }
+  .sv__media img, .sv__media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .sv__n { position: absolute; left: 22px; bottom: 10px; font-size: clamp(3.6rem, 7vw, 6.4rem); color: #fff; text-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+  .sv__txt { display: grid; gap: 18px; }
+  .sv__stat { display: inline-flex; gap: 8px; align-items: center; color: var(--rojo); padding-top: 16px; border-top: 1px solid var(--line); }
+  .pch { position: relative; overflow: hidden; isolation: isolate; padding-block: clamp(110px, 14vw, 220px); }
+  .pch__bg { position: absolute; inset: 0; z-index: -1; }
+  .pch__bg img, .pch__bg video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .pch__bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15, 16, 18, 0.9), rgba(15, 16, 18, 0.4)); }
+  .pch__in { display: grid; gap: 14px; max-width: 900px; }
+  .pch__big { font-size: clamp(5rem, 16vw, 15rem); line-height: 0.8; color: var(--brasa); margin-top: 16px; }
+  .pch .lede { color: rgba(244, 242, 238, 0.82); }
+  .ind { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+  .ind li { display: flex; align-items: center; gap: 14px; min-height: 120px; padding: 22px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); font-stretch: 112%; font-weight: 700; font-size: 1.1rem; transition: background-color 0.35s, color 0.35s; }
+  .ind li .mono { color: var(--rojo); transition: color 0.35s; }
+  .ind li :global(svg) { margin-left: auto; opacity: 0; transform: translateX(-8px); transition: opacity 0.35s, transform 0.5s var(--ease); }
+  .ind li:hover { background: var(--rojo); color: #fff; }
+  .ind li:hover .mono { color: #fff; }
+  .ind li:hover :global(svg) { opacity: 1; transform: none; }
+  .ct { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(28px, 5vw, 90px); align-items: start; }
+  .ct__pts { list-style: none; padding: 0; margin-top: 26px; display: grid; gap: 12px; }
+  .ct__pts li { display: flex; gap: 12px; align-items: center; }
+  .ct__pts :global(svg) { color: var(--brasa); }
+  .ct__form { display: grid; gap: 14px; padding: clamp(18px, 3vw, 34px); border-radius: 30px; background: var(--asfalto-2); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+  .ct__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  textarea.input { height: auto; padding: 14px 18px; resize: vertical; }
+  select.input { appearance: none; }
+  .input[aria-invalid='true'] { box-shadow: inset 0 0 0 2px var(--brasa); }
+  .ct__fine { color: var(--muted); }
+  @media (max-width: 1000px) { .en, .ind { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sv__row, .ct { grid-template-columns: minmax(0, 1fr); } .sv__row--rev .sv__media { order: 0; } }
+  @media (max-width: 560px) { .ind, .ct__row { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<script>
+  // Formulario comercial (demo): valida y muestra un número de solicitud
+  document.querySelectorAll<HTMLFormElement>('form[data-lead]').forEach((f) =>
+    f.addEventListener('submit', (e) => {
+      e.preventDefault()
+      const req = [...f.querySelectorAll<HTMLInputElement>('[required]')]
+      req.forEach((i) => i.setAttribute('aria-invalid', String(!i.checkValidity())))
+      const bad = req.find((i) => !i.checkValidity())
+      const msg = f.querySelector<HTMLElement>('[data-lead-msg]')!
+      if (bad) { bad.focus(); msg.textContent = 'Completá los campos marcados.'; return }
+      const n = 'B2B-' + String(Math.floor(Math.random() * 90000) + 10000)
+      f.innerHTML = `<div style="display:grid;gap:12px"><p class="kick">Solicitud ${n}</p><p class="dsp d3">¡Gracias! <em>Te contactamos pronto.</em></p><p class="prose">Esto es una demostración: en el sitio real, un ejecutivo comercial recibiría tu solicitud.</p></div>`
+    }),
+  )
+</script>

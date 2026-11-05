@@ -1,0 +1,73 @@
+---
+import Logo from './Logo.astro'
+import Icon from './Icon.astro'
+import { nav, url, company } from '../lib/site'
+interface Props { tone?: 'light' | 'dark' }
+const { tone = 'light' } = Astro.props
+const here = Astro.url.pathname
+---
+<header class="hdr" data-hdr data-tone={tone}>
+  <div class="hdr__bg"></div>
+  <div class="wrap hdr__in">
+    <a href={url('/')} class="hdr__logo" aria-label="Andreani, inicio"><Logo /></a>
+    <nav class="hdr__nav" aria-label="Principal">
+      {nav.map((n) => <a href={url(n.href)} aria-current={here.startsWith(url(n.href)) ? 'page' : undefined}>{n.label}</a>)}
+    </nav>
+    <div class="hdr__r">
+      <a class="hdr__track" href={url('/seguimiento/')} aria-label="Seguir un envío"><Icon name="scan" size={20} /></a>
+      <a class="btn btn--sm hdr__cta" href={url('/enviar/')}>Cotizar envío <Icon name="arrow" /></a>
+      <button class="hdr__menu" type="button" data-menu-open aria-label="Abrir menú" aria-expanded="false" aria-controls="mnav"><Icon name="menu" /></button>
+    </div>
+  </div>
+</header>
+<div class="mnav" id="mnav" data-menu inert>
+  <div class="mnav__top">
+    <Logo class="mnav__logo" />
+    <button class="mnav__x" type="button" data-menu-close aria-label="Cerrar menú"><Icon name="close" /></button>
+  </div>
+  <nav aria-label="Móvil">
+    {nav.map((n, i) => <a href={url(n.href)} style={`--i:${i}`}><span class="mono">0{i + 1}</span>{n.label}</a>)}
+  </nav>
+  <div class="mnav__foot">
+    <a class="btn" href={url('/enviar/')}>Cotizar envío <Icon name="arrow" /></a>
+    <a href={company.phoneHref} class="mono">{company.phone}</a>
+  </div>
+</div>
+
+<style>
+  .hdr { position: fixed; inset: 0 0 auto 0; z-index: 80; height: var(--hdr); color: var(--hdr-fg, #fff); transition: color 0.35s, transform 0.55s var(--ease); }
+  .hdr[data-tone='dark'] { --hdr-fg: var(--asfalto); --hdr-logo: var(--rojo); }
+  .hdr.is-solid { --hdr-fg: var(--asfalto); --hdr-logo: var(--rojo); }
+  .hdr.is-hidden { transform: translateY(-110%); }
+  .hdr__bg { position: absolute; inset: 10px var(--gutter); border-radius: 999px; background: color-mix(in srgb, var(--hueso) 86%, transparent); backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5); box-shadow: 0 10px 40px -20px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.5); opacity: 0; transform: scale(0.96); transition: opacity 0.35s, transform 0.5s var(--ease); }
+  .hdr.is-solid .hdr__bg { opacity: 1; transform: none; }
+  .hdr__in { position: relative; height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-inline: calc(var(--gutter) + 18px); }
+  .hdr__logo { width: 156px; color: var(--hdr-logo, #fff); transition: color 0.35s; flex: none; }
+  .hdr__logo :global(svg) { width: 100%; height: auto; }
+  .hdr__nav { display: flex; gap: 2px; }
+  .hdr__nav a { position: relative; padding: 10px 14px; font-weight: 600; font-size: 0.95rem; border-radius: 999px; transition: background-color 0.3s; }
+  .hdr__nav a:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+  .hdr__nav a[aria-current='page']::after { content: ''; position: absolute; left: 50%; bottom: 3px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--rojo); }
+  .hdr__r { display: flex; align-items: center; gap: 10px; }
+  .hdr__track { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1.5px currentColor; transition: background-color 0.3s, color 0.3s; }
+  .hdr__track:hover { background: var(--rojo); color: #fff; box-shadow: none; }
+  .hdr__menu { display: none; width: 44px; height: 44px; border-radius: 50%; place-items: center; box-shadow: inset 0 0 0 1.5px currentColor; }
+  @media (max-width: 1080px) {
+    .hdr__nav, .hdr__cta { display: none; }
+    .hdr__menu { display: grid; }
+    .hdr__logo { width: 132px; }
+    .hdr__in { padding-inline: calc(var(--gutter) + 10px); }
+  }
+  .mnav { position: fixed; inset: 0; z-index: 120; background: var(--rojo); color: #fff; padding: 18px var(--gutter) 28px; display: flex; flex-direction: column; clip-path: circle(0% at calc(100% - 44px) 38px); transition: clip-path 0.8s var(--ease-io); visibility: hidden; }
+  .mnav.is-open { clip-path: circle(150% at calc(100% - 44px) 38px); visibility: visible; }
+  .mnav__top { display: flex; justify-content: space-between; align-items: center; }
+  .mnav :global(.mnav__logo) { width: 132px; height: auto; color: #fff; }
+  .mnav__x { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.6); }
+  .mnav nav { margin-top: 8vh; display: grid; gap: 4px; }
+  .mnav nav a { display: flex; align-items: baseline; gap: 14px; font-stretch: 125%; font-weight: 850; font-style: italic; text-transform: uppercase; font-size: clamp(2.1rem, 10vw, 3.4rem); letter-spacing: -0.03em; line-height: 1.05; transform: translateY(30px); opacity: 0; transition: transform 0.7s var(--ease), opacity 0.5s; transition-delay: calc(var(--i) * 60ms + 200ms); }
+  .mnav.is-open nav a { transform: none; opacity: 1; }
+  .mnav nav a .mono { font-style: normal; opacity: 0.7; }
+  .mnav__foot { margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
+  .mnav__foot .btn { --b: #fff; --f: var(--rojo); --h: var(--asfalto); }
+  .mnav__foot .btn:hover { color: #fff; }
+</style>

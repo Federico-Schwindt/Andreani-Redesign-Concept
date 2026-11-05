@@ -1,0 +1,43 @@
+---
+import Base from '../layouts/Base.astro'
+import ArMap from '../components/ArMap.astro'
+import Hero from '../components/home/Hero.astro'
+import Actions from '../components/home/Actions.astro'
+import Journey from '../components/home/Journey.astro'
+import Network from '../components/home/Network.astro'
+import Business from '../components/home/Business.astro'
+import Story from '../components/home/Story.astro'
+import Quote from '../components/Quote.astro'
+import Lines from '../components/Lines.astro'
+import { media } from '../lib/site'
+---
+<Base loader preload={[{ href: media('container.avif'), as: 'image', type: 'image/avif', media: '(min-width: 761px)' }, { href: media('container-v.avif'), as: 'image', type: 'image/avif', media: '(max-width: 760px)' }]}>
+  <ArMap />
+  <Hero />
+  <Actions />
+  <Journey />
+  <section class="qsec sec t-dark" id="cotizar" aria-labelledby="q-t">
+    <div class="wrap">
+      <div class="shead">
+        <div>
+          <p class="kick">Cotizador</p>
+          <Lines as="h2" class="dsp d2" text="Cotizá en|*10 segundos.*" />
+          <span class="sr-only" id="q-t">Cotizador de envíos</span>
+        </div>
+        <p class="lede" data-rv>Sin registrarte. Cargá tus bultos, elegí la ruta y mirá los precios al instante. Después reservás y sacás la etiqueta en el mismo lugar, en seis pasos.</p>
+      </div>
+      <div data-rv><Quote id="cotizador-home" /></div>
+    </div>
+  </section>
+  <Network />
+  <Business />
+  <Story />
+</Base>
+
+<style>
+  .qsec { background: radial-gradient(60% 50% at 30% 20%, #2b0f11 0%, var(--asfalto) 60%); }
+</style>
+
+<script>
+  import '../scripts/home'
+</script>

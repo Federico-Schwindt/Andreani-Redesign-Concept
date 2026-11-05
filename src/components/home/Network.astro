@@ -1,0 +1,101 @@
+---
+import Icon from '../Icon.astro'
+import Lines from '../Lines.astro'
+import sucursales from '../../data/sucursales.json'
+import { MAP, project, arc } from '../../lib/geo'
+import { url, stats } from '../../lib/site'
+
+const dots = (sucursales as { n: string; l: string; p: string; la: number; lo: number; t: string }[]).map((s) => ({ ...s, ...project(s.la, s.lo) }))
+const hubs = [
+  { n: 'Planta Pacheco', la: -34.45, lo: -58.65, main: true },
+  { n: 'Rosario', la: -32.95, lo: -60.65 }, { n: 'Córdoba', la: -31.42, lo: -64.18 }, { n: 'Mendoza', la: -32.89, lo: -68.84 },
+  { n: 'Tucumán', la: -26.82, lo: -65.22 }, { n: 'Salta', la: -24.78, lo: -65.41 }, { n: 'Resistencia', la: -27.45, lo: -58.98 },
+  { n: 'Posadas', la: -27.37, lo: -55.9 }, { n: 'Mar del Plata', la: -38.0, lo: -57.55 }, { n: 'Bahía Blanca', la: -38.72, lo: -62.27 },
+  { n: 'Neuquén', la: -38.95, lo: -68.06 }, { n: 'Comodoro Rivadavia', la: -45.86, lo: -67.48 }, { n: 'Río Gallegos', la: -51.62, lo: -69.22 },
+].map((h) => ({ ...h, ...project(h.la, h.lo) }))
+const origin = hubs[0]
+const routes = hubs.slice(1).map((h) => arc(origin, h))
+---
+<section class="net sec t-dark" id="red" data-net aria-labelledby="net-t">
+  <div class="wrap net__grid">
+    <div class="net__copy">
+      <p class="kick">La red</p>
+      <Lines as="h2" class="dsp d2" text="Llegamos a|*todo el país.*" />
+      <p class="lede" data-rv>Cada punto es una sucursal real que atiende al público. Sumale 2.850 puntos HOP en comercios de barrio y 36 hubs logísticos.</p>
+      <dl class="net__stats">
+        <div data-rv><dt>Sucursales</dt><dd class="tnum" data-count={stats.sucursales}>{stats.sucursales}</dd></div>
+        <div data-rv style="--d:80"><dt>Puntos HOP</dt><dd class="tnum" data-count={stats.hop}>{stats.hop.toLocaleString('es-AR')}</dd></div>
+        <div data-rv style="--d:160"><dt>Hubs logísticos</dt><dd class="tnum" data-count={stats.hubs}>{stats.hubs}</dd></div>
+        <div data-rv style="--d:240"><dt>Jurisdicciones</dt><dd class="tnum" data-count="24">24</dd></div>
+      </dl>
+      <form class="net__find" action={url('/sucursales/')} method="get" data-rv>
+        <label class="sr-only" for="net-q">Buscá tu sucursal</label>
+        <Icon name="search" />
+        <input class="input" id="net-q" name="q" placeholder="Buscá por localidad, provincia o CP" autocomplete="off" />
+        <button class="btn btn--sm" type="submit">Buscar</button>
+      </form>
+      <p class="net__br mono" data-rv><Icon name="globe" size={16} /> También en Brasil: San Pablo, Río de Janeiro y Espírito Santo.</p>
+    </div>
+
+    <div class="net__map" data-rv>
+      <svg viewBox={`-30 -10 ${MAP.w + 60} ${MAP.h + 20}`} role="img" aria-label={`Mapa de la Argentina con ${dots.length} sucursales de Andreani que atienden al público`}>
+        <use href="#ar-provs" class="net__provs" />
+        <g class="net__routes">{routes.map((d, i) => <path d={d} style={`--i:${i}`} />)}</g>
+        <g class="net__dots">
+          {dots.map((s) => <circle cx={s.x.toFixed(1)} cy={s.y.toFixed(1)} r="4.2" style={`--t:${(s.y / MAP.h).toFixed(3)}`} data-tip={`${s.n} · ${s.l}, ${s.p}`}><title>{`${s.n} · ${s.l}, ${s.p}`}</title></circle>)}
+        </g>
+        <g class="net__hubs">
+          {hubs.map((h) => (
+            <g transform={`translate(${h.x.toFixed(1)} ${h.y.toFixed(1)})`} class:list={{ main: h.main }}>
+              <circle r={h.main ? 30 : 18} class="net__pulse" /><circle r={h.main ? 11 : 7} class="net__core" />
+              {h.main && <text x="18" y="-16" class="net__lbl">Planta Pacheco · 26.000 envíos/h</text>}
+            </g>
+          ))}
+        </g>
+      </svg>
+      <p class="net__tip mono" data-net-tip aria-hidden="true"></p>
+      <p class="net__note mono">Troncales ilustrativas. Sucursales: API pública de Andreani.</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .net { overflow: hidden; background: radial-gradient(70% 60% at 75% 45%, #2a1012 0%, var(--asfalto) 65%); }
+  .net__grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(28px, 5vw, 90px); align-items: center; }
+  .net__copy .kick { margin-bottom: 20px; }
+  .net__copy .d2 { font-size: clamp(2.4rem, 1rem + 3.8vw, 5.2rem); }
+  .net__copy .lede { margin-top: 24px; }
+  .net__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin-top: 36px; background: var(--line); border-radius: 20px; overflow: hidden; }
+  .net__stats div { background: var(--asfalto-2); padding: 20px 22px; display: flex; flex-direction: column-reverse; gap: 6px; }
+  .net__stats dd { font-stretch: 125%; font-weight: 850; font-style: italic; font-size: clamp(2.2rem, 4vw, 3.6rem); line-height: 0.9; color: #fff; }
+  .net__stats div:nth-child(2) dd { color: var(--brasa); }
+  .net__stats dt { color: var(--muted); font-size: 0.9rem; }
+  .net__find { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 22px; padding: 6px; border-radius: 22px; background: rgba(255, 255, 255, 0.06); box-shadow: inset 0 0 0 1px var(--line); }
+  .net__find > :global(svg) { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .net__find .input { padding-left: 50px; background: transparent; box-shadow: none; }
+  .net__find .btn { height: 58px; }
+  .net__br { display: flex; align-items: center; gap: 8px; margin-top: 18px; color: var(--muted); }
+
+  .net__map { position: relative; height: min(88vh, 860px); }
+  .net__map svg { width: 100%; height: 100%; overflow: visible; }
+  .net__provs { fill: rgba(255, 255, 255, 0.05); stroke: rgba(255, 255, 255, 0.16); stroke-width: 1.2; }
+  .net__routes path { fill: none; stroke: rgba(255, 77, 61, 0.55); stroke-width: 1.6; stroke-dasharray: 3 9; stroke-linecap: round; opacity: 0; transition: opacity 0.8s; transition-delay: calc(1.4s + var(--i) * 0.06s); animation: flow 2.4s linear infinite; }
+  @keyframes flow { to { stroke-dashoffset: -48; } }
+  .net__dots circle { fill: #fff; opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0); transition: opacity 0.4s, transform 0.6s cubic-bezier(0.3, 1.6, 0.5, 1), fill 0.2s; transition-delay: calc(var(--t) * 1.5s); cursor: pointer; }
+  .net__dots circle:hover { fill: var(--brasa); transform: scale(2.2); transition-delay: 0s; }
+  .net__map.in .net__dots circle { opacity: 0.9; transform: scale(1); }
+  .net__map.in .net__routes path { opacity: 1; }
+  .net__hubs g { opacity: 0; transition: opacity 0.6s 1.2s; }
+  .net__map.in .net__hubs g { opacity: 1; }
+  .net__core { fill: var(--rojo); stroke: #fff; stroke-width: 2.5; }
+  .net__pulse { fill: rgba(215, 25, 32, 0.25); transform-box: fill-box; transform-origin: center; animation: pulse 2.2s ease-out infinite; }
+  @keyframes pulse { from { transform: scale(0.4); opacity: 0.9; } to { transform: scale(1.8); opacity: 0; } }
+  .net__lbl { fill: #fff; font-family: var(--mono); font-size: 18px; letter-spacing: 0.04em; }
+  .net__tip { position: absolute; left: 0; top: 0; padding: 8px 12px; border-radius: 10px; background: #fff; color: var(--asfalto); pointer-events: none; opacity: 0; transform: translate(-50%, calc(-100% - 12px)); transition: opacity 0.2s; white-space: nowrap; text-transform: none; letter-spacing: 0; font-size: 0.78rem; }
+  .net__tip.on { opacity: 1; }
+  .net__note { position: absolute; right: 0; bottom: 0; color: var(--muted); font-size: 0.62rem; }
+  @media (max-width: 900px) {
+    .net__grid { grid-template-columns: minmax(0, 1fr); }
+    .net__map { height: 110vw; max-height: 760px; }
+  }
+</style>

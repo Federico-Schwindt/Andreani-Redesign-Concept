@@ -1,0 +1,675 @@
+---
+/**
+ * Cotizador y reserva en 6 pasos (inspirado en los "rate shops" de logística):
+ * bultos + ruta con autocompletado → precios al instante → origen → destino → contacto → pago (demo) → etiqueta con QR.
+ * Sucursales reales (API pública de Andreani) y localidades reales (Georef). Precios: estimación de demostración.
+ */
+import Icon from './Icon.astro'
+import Emblem from './Emblem.astro'
+import Logo from './Logo.astro'
+import { MAP } from '../lib/geo'
+import { url, stats, company } from '../lib/site'
+interface Props { id?: string }
+const { id = 'cotizador' } = Astro.props
+const tipos = [
+  { k: 'paquete', t: 'Paquetería', i: 'box' },
+  { k: 'sobre', t: 'Sobre', i: 'mail' },
+  { k: 'vinos', t: 'Vinos', i: 'wine' },
+  { k: 'bigger', t: 'Bigger y pallets', i: 'pallet' },
+]
+const steps = ['Bultos', 'Origen', 'Destino', 'Contacto', 'Pago', 'Etiqueta']
+const trust = [
+  { i: 'locate', b: 'Seguimiento en vivo', s: 'de la etiqueta a la puerta' },
+  { i: 'store', b: `${stats.sucursales} sucursales y ${stats.hop.toLocaleString('es-AR')} HOP`, s: 'para despachar y retirar cerca' },
+  { i: 'phone', b: 'Atención humana', s: company.phone },
+  { i: 'shield', b: 'Etiqueta en 2 minutos', s: 'sin registrarte para cotizar' },
+]
+const vb = `-40 -20 ${MAP.w + 80} ${MAP.h + 40}`
+---
+<div class="qt" data-quote id={id} data-trk={url('/seguimiento/')}>
+  <div class="qt__tick">
+    <p class="qt__tick-k mono"><i aria-hidden="true"></i>Tarifas de referencia · caja de 5 kg</p>
+    <div class="qt__tick-vp"><div class="qt__tick-tr" data-qtick></div></div>
+  </div>
+
+  <div class="qt__grid">
+    <div class="qt__panel" data-qpanel>
+      <ol class="qt__steps" aria-label="Pasos del envío">
+        {steps.map((s, i) => (
+          <li><button type="button" class="qt__st" data-goto={i} disabled={i > 0} aria-current={i === 0 ? 'step' : undefined}><span class="qt__stn">{i + 1}</span><span class="qt__stt">{s}</span></button></li>
+        ))}
+      </ol>
+
+      <!-- 1 · Bultos y ruta -->
+      <form class="qt__pane is-on" data-pane="0" data-qform novalidate aria-label="Cotizar envío">
+        <div class="qt__tabs" role="radiogroup" aria-label="Qué enviás">
+          {tipos.map((t, i) => (
+            <label class="qt__tab"><input type="radio" name="tipo" value={t.k} checked={i === 0} /><span><Icon name={t.i} size={18} />{t.t}</span></label>
+          ))}
+        </div>
+
+        <div class="qt__route">
+          {['o', 'd'].map((k) => (
+            <div class="qt__ac qt__box" data-ac={k}>
+              <label class="qt__boxl" for={`${id}-${k}`}>{k === 'o' ? 'Desde' : 'Hasta'}</label>
+              <span class="qt__pin" aria-hidden="true"><Icon name="pin" size={18} /></span>
+              <input id={`${id}-${k}`} class="qt__in" name={k} role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls={`${id}-${k}-list`} autocomplete="off" placeholder="Localidad o código postal" data-ac-input />
+              <ul class="qt__list" id={`${id}-${k}-list`} role="listbox" hidden data-ac-list></ul>
+            </div>
+          ))}
+          <button type="button" class="qt__swap" data-swap aria-label="Invertir origen y destino"><Icon name="arrow" size={18} /></button>
+        </div>
+
+        <div class="qt__ship qt__box">
+          <div class="qt__shiph">
+            <span class="qt__boxl">Bultos</span>
+            <div class="qt__unit" role="radiogroup" aria-label="Tipo de bulto" data-qunit hidden>
+              <label><input type="radio" name="unit" value="caja" checked /><span><Icon name="box" size={16} />Caja</span></label>
+              <label><input type="radio" name="unit" value="pallet" /><span><Icon name="pallet" size={16} />Pallet</span></label>
+            </div>
+          </div>
+          <div class="qt__rows" data-qrows></div>
+          <div class="qt__shipf">
+            <button type="button" class="qt__add" data-qadd>+ Agregar bulto</button>
+            <p class="qt__sum mono" data-qsum aria-live="polite">—</p>
+          </div>
+          <div data-qbulk>
+            <label class="qt__drop" data-qdrop>
+              <input type="file" accept=".csv,.tsv,.txt,text/csv" class="sr-only" data-qfile />
+              <span class="qt__dropi" aria-hidden="true"><Icon name="doc" size={18} /></span>
+              <span class="qt__dropt"><b>¿Muchos bultos? Soltá tu planilla acá o <u>elegí un archivo</u></b><small>CSV con columnas cantidad, kg, largo, ancho y alto. Hasta 50 bultos, cotizados como un solo envío.</small></span>
+            </label>
+            <button type="button" class="qt__tpl" data-qtpl>Descargar la plantilla</button>
+          </div>
+        </div>
+
+        <div class="qt__og2">
+          <fieldset class="qt__og">
+            <legend class="qt__boxl">Despacho</legend>
+            <label class="qt__chip"><input type="radio" name="desp" value="sucursal" checked /><span><Icon name="store" size={16} />Lo llevo a sucursal<em>Incluido</em></span></label>
+            <label class="qt__chip"><input type="radio" name="desp" value="retiro" /><span><Icon name="truck" size={16} />Retiro a domicilio<em>+ $ 3.900</em></span></label>
+          </fieldset>
+          <fieldset class="qt__og">
+            <legend class="qt__boxl">Entrega</legend>
+            <label class="qt__chip"><input type="radio" name="ent" value="domicilio" checked /><span><Icon name="home" size={16} />A domicilio</span></label>
+            <label class="qt__chip"><input type="radio" name="ent" value="sucursal" /><span><Icon name="store" size={16} />En sucursal<em>Más barato</em></span></label>
+          </fieldset>
+        </div>
+
+        <div class="qt__date">
+          <span class="qt__boxl">Fecha de despacho</span>
+          <b data-qdate>—</b>
+          <button type="button" class="qt__chg" data-qdate-btn aria-expanded="false" aria-controls={`${id}-days`}>Cambiar</button>
+          <div class="qt__days" id={`${id}-days`} role="radiogroup" aria-label="Fecha de despacho" data-qdays hidden></div>
+        </div>
+
+        <button class="qt__cta" type="submit" data-qgo><span data-qgo-t>Ver precios</span><Icon name="arrow" size={20} /></button>
+        <p class="qt__micro"><i aria-hidden="true"></i>Sin registrarte. Precios en pesos, con IVA. Estimación de demo.</p>
+        <p class="qt__err" role="alert" hidden data-qerr></p>
+
+        <div class="qt__rates" data-qrates>
+          <p class="qt__rh" aria-live="polite" data-qrh><i aria-hidden="true"></i><span>Completá origen y destino para ver los precios</span></p>
+          <div class="qt__rl" role="radiogroup" aria-label="Servicio">
+            {[['std', 'Estándar', 'truck'], ['prio', 'Prioritario', 'bolt']].map(([k, t, ic], i) => (
+              <label class="qt__rate" data-rate={k}>
+                <input type="radio" name="vel" value={k} checked={i === 0} disabled />
+                <span class="qt__ri" aria-hidden="true"><Icon name={ic} size={20} /></span>
+                <span class="qt__rt"><b>{t}{k === 'std' && <em>Más elegido</em>}</b><small data-eta={k}>Plazo según la ruta</small></span>
+                <span class="qt__rp" data-price={k}>Ingresá la ruta</span>
+              </label>
+            ))}
+          </div>
+          <button type="button" class="qt__save" data-qsave hidden></button>
+          <button type="button" class="qt__cta qt__cta--go" data-qnext hidden><span>Continuar con <b data-qnext-t>Estándar</b></span><Icon name="arrow" size={20} /></button>
+          <p class="qt__fine">Precio todo incluido: recepción o retiro, combustible y entrega. Referencia de demo: el precio final se confirma al pagar.</p>
+        </div>
+      </form>
+
+      <!-- 2 · Origen -->
+      <form class="qt__pane" data-pane="1" novalidate aria-labelledby={`${id}-h1`}>
+        <div class="qt__ph">
+          <h3 class="qt__h" id={`${id}-h1`} tabindex="-1">¿Desde dónde sale?</h3>
+          <button type="button" class="qt__demo" data-fill>Completar con datos de ejemplo</button>
+        </div>
+        <button type="button" class="qt__place" data-goto="0"><Icon name="pin" size={16} /><span data-qp="o">—</span><u>Cambiar</u></button>
+        <div data-mode="sucursal">
+          <p class="qt__hint">Elegí dónde lo dejás. Son las sucursales más cercanas a tu origen, con su horario real.</p>
+          <div class="qt__sucs" role="radiogroup" aria-label="Sucursal de despacho" data-sucs="o"></div>
+        </div>
+        <div data-mode="retiro" hidden>
+          <p class="qt__hint">Pasamos a buscarlo <b data-qdate2>—</b>, entre las 9 y las 18 h.</p>
+          <div class="qt__fields">
+            <label class="qt__fld qt__fld--w"><span>Calle y número</span><input name="calle" autocomplete="address-line1" placeholder="Av. Pellegrini 1250" data-req /></label>
+            <label class="qt__fld"><span>Piso / depto</span><input name="piso" autocomplete="address-line2" placeholder="Opcional" /></label>
+            <label class="qt__fld"><span>Código postal</span><input name="cp" inputmode="numeric" autocomplete="postal-code" placeholder="2000" /></label>
+          </div>
+        </div>
+        <p class="qt__err" role="alert" hidden data-perr></p>
+        <div class="qt__nav"><button type="button" class="qt__back" data-back><Icon name="back" size={16} />Volver</button><button class="qt__cta qt__cta--sm" type="submit"><span>Continuar</span><Icon name="arrow" size={18} /></button></div>
+      </form>
+
+      <!-- 3 · Destino -->
+      <form class="qt__pane" data-pane="2" novalidate aria-labelledby={`${id}-h2`}>
+        <div class="qt__ph">
+          <h3 class="qt__h" id={`${id}-h2`} tabindex="-1">¿Quién lo recibe?</h3>
+          <button type="button" class="qt__demo" data-fill>Completar con datos de ejemplo</button>
+        </div>
+        <button type="button" class="qt__place" data-goto="0"><Icon name="pin" size={16} /><span data-qp="d">—</span><u>Cambiar</u></button>
+        <div class="qt__fields">
+          <label class="qt__fld qt__fld--w"><span>Nombre y apellido</span><input name="nombre" autocomplete="name" placeholder="Lucía Fernández" data-req /></label>
+        </div>
+        <div data-mode="domicilio">
+          <div class="qt__fields">
+            <label class="qt__fld qt__fld--w"><span>Calle y número</span><input name="calle" autocomplete="address-line1" placeholder="San Martín 455" data-req /></label>
+            <label class="qt__fld"><span>Piso / depto</span><input name="piso" autocomplete="address-line2" placeholder="Opcional" /></label>
+            <label class="qt__fld"><span>Código postal</span><input name="cp" inputmode="numeric" autocomplete="postal-code" placeholder="9410" /></label>
+          </div>
+        </div>
+        <div data-mode="sucursal" hidden>
+          <p class="qt__hint">¿En qué sucursal lo retira? Le avisamos apenas llega.</p>
+          <div class="qt__sucs" role="radiogroup" aria-label="Sucursal de retiro" data-sucs="d"></div>
+        </div>
+        <p class="qt__err" role="alert" hidden data-perr></p>
+        <div class="qt__nav"><button type="button" class="qt__back" data-back><Icon name="back" size={16} />Volver</button><button class="qt__cta qt__cta--sm" type="submit"><span>Continuar</span><Icon name="arrow" size={18} /></button></div>
+      </form>
+
+      <!-- 4 · Contacto -->
+      <form class="qt__pane" data-pane="3" novalidate aria-labelledby={`${id}-h3`}>
+        <div class="qt__ph">
+          <h3 class="qt__h" id={`${id}-h3`} tabindex="-1">¿A dónde te avisamos?</h3>
+          <button type="button" class="qt__demo" data-fill>Completar con datos de ejemplo</button>
+        </div>
+        <div class="qt__fields">
+          <label class="qt__fld qt__fld--w"><span>Email</span><input name="email" type="email" autocomplete="email" placeholder="vos@ejemplo.com" data-req /></label>
+          <label class="qt__fld qt__fld--w"><span>Celular (opcional)</span><input name="cel" type="tel" autocomplete="tel" placeholder="11 5555 5555" /></label>
+        </div>
+        <label class="qt__check"><input type="checkbox" name="wa" checked /><span>Avisarle al destinatario por WhatsApp cuando salga a reparto</span></label>
+        <p class="qt__note mono">Demo: nada de lo que escribas sale de tu navegador.</p>
+        <p class="qt__err" role="alert" hidden data-perr></p>
+        <div class="qt__nav"><button type="button" class="qt__back" data-back><Icon name="back" size={16} />Volver</button><button class="qt__cta qt__cta--sm" type="submit"><span>Ir al pago</span><Icon name="arrow" size={18} /></button></div>
+      </form>
+
+      <!-- 5 · Pago -->
+      <form class="qt__pane" data-pane="4" novalidate aria-labelledby={`${id}-h4`}>
+        <div class="qt__ph"><h3 class="qt__h" id={`${id}-h4`} tabindex="-1">Revisá y pagá</h3></div>
+        <dl class="qt__bill" data-qbill></dl>
+        <div class="qt__total"><span>Total</span><b data-qtotal>—</b></div>
+        <fieldset class="qt__og qt__og--pay">
+          <legend class="qt__boxl">Medio de pago</legend>
+          <label class="qt__chip"><input type="radio" name="pago" value="tarjeta" checked /><span>Tarjeta de crédito o débito</span></label>
+          <label class="qt__chip"><input type="radio" name="pago" value="cuenta" /><span>Dinero en cuenta</span></label>
+          <label class="qt__chip"><input type="radio" name="pago" value="cc" /><span>Cuenta corriente (empresas)</span></label>
+        </fieldset>
+        <p class="qt__note mono">En esta demo no se pide ni se procesa ningún dato de pago. En el sitio real, acá se abre el checkout seguro.</p>
+        <div class="qt__nav"><button type="button" class="qt__back" data-back><Icon name="back" size={16} />Volver</button><button class="qt__cta qt__cta--sm" type="submit" data-qpay><span>Pagar <b data-qpay-t>—</b></span><Icon name="arrow" size={18} /></button></div>
+      </form>
+
+      <!-- 6 · Etiqueta -->
+      <div class="qt__pane" data-pane="5" role="group" aria-labelledby={`${id}-h5`}>
+        <div class="qt__ph"><h3 class="qt__h" id={`${id}-h5`} tabindex="-1">¡Listo! Tu etiqueta</h3><span class="qt__ok mono"><Icon name="check" size={14} />Envío creado</span></div>
+        <div class="qt__printer">
+          <div class="qt__slot" aria-hidden="true"></div>
+          <article class="label qt__lbl" data-qlbl>
+            <header class="qt__lh"><Logo class="qt__lbl-logo" /><span class="qt__lsvc" data-l="svc">Estándar</span></header>
+            <div class="qt__lg">
+              <div><span class="mono">Remitente</span><b data-l="from">—</b><small data-l="froma">—</small></div>
+              <div><span class="mono">Destinatario</span><b data-l="to">—</b><small data-l="toa">—</small></div>
+            </div>
+            <div class="qt__lm">
+              <div class="qt__qr" data-l="qr" aria-label="Código QR para seguir el envío" role="img"></div>
+              <div class="qt__lmi">
+                <span class="mono">N.º de envío</span>
+                <b class="qt__ln" data-l="n">—</b>
+                <span class="qt__lcode" data-l="code">—</span>
+                <span class="mono" data-l="meta">—</span>
+              </div>
+            </div>
+            <div class="barcode qt__lbc" aria-hidden="true"></div>
+            <p class="qt__lf mono">Escaneá el QR para seguirlo · Concepto: no válida para despachar</p>
+          </article>
+        </div>
+        <div class="qt__done">
+          <a class="qt__cta qt__cta--sm" data-l="track" href={url('/seguimiento/')}><span>Seguir este envío</span><Icon name="arrow" size={18} /></a>
+          <button type="button" class="qt__back" data-qpdf>Descargar PDF</button>
+          <button type="button" class="qt__back" data-qnew>Hacer otro envío</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="qt__stage" data-qstage>
+      <svg class="qt__map" viewBox={vb} preserveAspectRatio="xMaxYMid meet" aria-hidden="true" data-qsvg>
+        <use href="#ar-provs" class="qt__provs" />
+        <g class="qt__lanes" data-qlanes></g>
+        <path class="qt__arc qt__arc--glow" d="" data-qarc2 />
+        <path class="qt__arc" d="" data-qarc />
+        <g class="qt__cands" data-qcands></g>
+        <g class="qt__mk qt__mk--o" data-mk="o"><circle r="26" class="qt__ring" /><circle r="9" /></g>
+        <g class="qt__mk qt__mk--d" data-mk="d"><circle r="26" class="qt__ring" /><circle r="9" /></g>
+        <g class="qt__van" data-qvan><rect x="-16" y="-10" width="32" height="20" rx="5" /><circle r="3" cx="-8" cy="11" /><circle r="3" cx="9" cy="11" /></g>
+      </svg>
+      <p class="qt__live mono" data-qlive><i aria-hidden="true"></i><span>Mapa en vivo</span></p>
+
+      <div class="qbox" data-qbox aria-hidden="true">
+        <div class="qbox__c">
+          <i class="qf qf--front"><span class="qf__tape"></span><span class="qf__lbl"><b>AND</b><span class="barcode"></span></span></i>
+          <i class="qf qf--back"><span class="qf__tape"></span></i>
+          <i class="qf qf--right"><Emblem class="qf__em" /></i>
+          <i class="qf qf--left"></i>
+          <i class="qf qf--top"><span class="qf__tape qf__tape--top"></span></i>
+          <i class="qf qf--bottom"></i>
+        </div>
+        <span class="qbox__n mono" data-qn>× 1</span>
+      </div>
+
+      <div class="qt__top" data-qtop>
+        <p class="qt__boxl">Rutas más cotizadas</p>
+        <ul data-qtoplist></ul>
+        <p class="qt__toph">Tocá una ruta: se completa sola y cotiza al instante.</p>
+      </div>
+
+      <div class="qt__hud">
+        <p class="mono" data-qroute>Elegí origen y destino</p>
+        <p class="mono qt__vw" data-qvw>—</p>
+      </div>
+    </div>
+  </div>
+
+  <ul class="qt__trust">
+    {trust.map((t) => (<li><span class="qt__ti"><Icon name={t.i} size={18} /></span><span><b>{t.b}</b><small>{t.s}</small></span></li>))}
+  </ul>
+  <div class="qt__toast" role="status" data-qtoast hidden></div>
+</div>
+
+<style is:global>
+  .qt { scroll-margin-top: 96px; --qb: #1c1d21; --qb2: #24262b; --ql: rgba(255, 255, 255, 0.09); position: relative; display: grid; gap: 12px; padding: 12px; border-radius: 34px; background: var(--asfalto-2); color: var(--hueso); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 60px 120px -60px rgba(0, 0, 0, 0.8); }
+  .qt .mono { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* ticker */
+  .qt__tick { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 4px 6px 4px 16px; border-radius: 22px; background: #121316; box-shadow: inset 0 0 0 1px var(--ql); overflow: hidden; }
+  .qt__tick-k { flex: none; display: flex; align-items: center; gap: 8px; color: var(--brasa); }
+  .qt__tick-k i, .qt__micro i, .qt__rh i, .qt__live i { width: 7px; height: 7px; border-radius: 50%; background: var(--brasa); box-shadow: 0 0 0 0 rgba(255, 77, 61, 0.6); animation: qt-dot 1.8s infinite; flex: none; }
+  @keyframes qt-dot { 70% { box-shadow: 0 0 0 7px rgba(255, 77, 61, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 77, 61, 0); } }
+  .qt__tick-vp { flex: 1; min-width: 0; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+  .qt__tick-g { display: flex; }
+  .qt__tick-tr { display: flex; width: max-content; animation: qt-tick 60s linear infinite; }
+  .qt__tick:hover .qt__tick-tr, .qt__tick:focus-within .qt__tick-tr { animation-play-state: paused; }
+  @keyframes qt-tick { to { transform: translateX(-50%); } }
+  .qt__lane { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-right: 1px solid var(--ql); font-size: 0.84rem; white-space: nowrap; color: rgba(244, 242, 238, 0.82); transition: color 0.2s, background-color 0.2s; border-radius: 12px; }
+  .qt__lane b { color: #fff; font-weight: 750; }
+  .qt__lane span { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brasa); }
+  .qt__lane:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+
+  .qt__grid { display: grid; grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr); gap: 12px; align-items: stretch; }
+  .qt__panel { min-width: 0; padding: clamp(14px, 1.8vw, 24px); border-radius: 26px; background: #121316; box-shadow: inset 0 0 0 1px var(--ql); }
+
+  /* stepper */
+  .qt__steps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0 0 18px; }
+  .qt__st { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px 0 5px; border-radius: 99px; background: var(--qb); box-shadow: inset 0 0 0 1px var(--ql); color: rgba(244, 242, 238, 0.6); font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; transition: background-color 0.3s, color 0.3s, box-shadow 0.3s; }
+  .qt__stn { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--qb2); color: #fff; font-size: 0.66rem; transition: background-color 0.3s; }
+  .qt__st:not(:disabled):hover { color: #fff; }
+  .qt__st[aria-current='step'] { color: #fff; box-shadow: inset 0 0 0 1.5px var(--brasa); background: rgba(215, 25, 32, 0.12); }
+  .qt__st[aria-current='step'] .qt__stn { background: var(--rojo); }
+  .qt__st.done { color: rgba(244, 242, 238, 0.85); }
+  .qt__st.done .qt__stn { background: #fff; color: var(--rojo); font-size: 0; }
+  .qt__st.done .qt__stn::before { content: '✓'; font-size: 0.8rem; font-weight: 700; }
+  .qt__st:disabled { cursor: default; opacity: 0.55; }
+  .qt__st.done:disabled, .qt__st[aria-current='step']:disabled { opacity: 1; }
+
+  /* panes */
+  .qt__pane { display: none; gap: 12px; }
+  .qt__pane.is-on { display: grid; }
+  .qt__box { position: relative; border-radius: 18px; background: var(--qb); box-shadow: inset 0 0 0 1px var(--ql); transition: box-shadow 0.25s; }
+  .qt__boxl { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244, 242, 238, 0.55); }
+
+  /* tabs */
+  .qt__tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 18px; background: var(--qb); box-shadow: inset 0 0 0 1px var(--ql); }
+  .qt__tab input, .qt__unit input, .qt__chip input, .qt__rate input, .qt__suc input, .qt__day input { position: absolute; opacity: 0; pointer-events: none; }
+  .qt__tab span { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 6px 8px; border-radius: 14px; font-weight: 650; font-size: 0.86rem; text-align: center; line-height: 1.15; color: rgba(244, 242, 238, 0.7); cursor: pointer; transition: background-color 0.3s, color 0.3s, box-shadow 0.3s; }
+  .qt__tab span:hover { color: #fff; }
+  .qt__tab input:checked + span { background: var(--qb2); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 10px 24px -14px #000; }
+  .qt__tab input:checked + span svg { color: var(--brasa); }
+  .qt__tab input:focus-visible + span, .qt__unit input:focus-visible + span, .qt__chip input:focus-visible + span, .qt__rate input:focus-visible ~ .qt__rt, .qt__suc input:focus-visible + span, .qt__day input:focus-visible + span { outline: 2px solid var(--brasa); outline-offset: 2px; }
+
+  /* ruta */
+  .qt__route { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .qt__ac { padding: 12px 14px 10px 44px; }
+  .qt__ac:focus-within { box-shadow: inset 0 0 0 2px var(--rojo); }
+  .qt__ac.is-set .qt__pin { color: var(--brasa); }
+  .qt__ac.bad { animation: qt-shake 0.4s; box-shadow: inset 0 0 0 2px var(--brasa); }
+  @keyframes qt-shake { 25% { transform: translateX(-6px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-3px); } }
+  .qt__pin { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: rgba(244, 242, 238, 0.4); transition: color 0.3s; }
+  .qt__in { display: block; width: 100%; height: 30px; margin-top: 2px; padding: 0; border: 0; background: none; color: #fff; font-size: 1.08rem; font-weight: 600; outline: none; text-overflow: ellipsis; }
+  .qt__in::placeholder { color: rgba(244, 242, 238, 0.32); font-weight: 500; }
+  .qt__swap { position: absolute; left: 50%; top: 50%; z-index: 3; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 50%; display: grid; place-items: center; background: var(--qb2); color: var(--brasa); box-shadow: 0 0 0 5px #121316, inset 0 0 0 1px var(--ql); transition: transform 0.5s var(--ease), background-color 0.3s, color 0.3s; }
+  .qt__swap:hover { transform: rotate(180deg); background: var(--rojo); color: #fff; }
+  .qt__list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30; list-style: none; padding: 6px; margin: 0; border-radius: 16px; background: #fff; color: var(--asfalto); box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7); max-height: 280px; overflow-y: auto; }
+  .qt__list li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-size: 0.95rem; }
+  .qt__list li small { color: rgba(15, 16, 18, 0.55); font-size: 0.8rem; white-space: nowrap; }
+  .qt__list li[aria-selected='true'], .qt__list li:hover { background: var(--hueso); }
+
+  /* bultos */
+  .qt__ship { padding: 12px; display: grid; gap: 10px; }
+  .qt__shiph { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 30px; padding-left: 4px; }
+  .qt__unit { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: #121316; }
+  .qt__unit[hidden] { display: none; }
+  .qt__unit span { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 9px; font-size: 0.82rem; font-weight: 600; color: rgba(244, 242, 238, 0.6); cursor: pointer; transition: background-color 0.25s, color 0.25s; }
+  .qt__unit input:checked + span { background: var(--qb2); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); }
+  .qt__rows { display: grid; gap: 8px; max-height: 330px; overflow-y: auto; overscroll-behavior: contain; padding: 2px; margin: -2px; }
+  .qr { display: grid; grid-template-columns: 0.8fr 1fr repeat(3, minmax(0, 0.8fr)) 30px; gap: 6px; align-items: stretch; animation: qr-in 0.45s var(--ease) both; }
+  .qr--sobre { grid-template-columns: 0.8fr 1fr 2.4fr 30px; }
+  .qr--vinos { grid-template-columns: 0.8fr 2fr 1.4fr 30px; }
+  @keyframes qr-in { from { opacity: 0; transform: translateY(-8px); } }
+  .qr__dims { display: contents; }
+  .qr__f { display: grid; justify-items: center; align-content: center; gap: 2px; min-width: 0; height: 56px; padding: 6px 4px; border-radius: 12px; background: #121316; box-shadow: inset 0 0 0 1px var(--ql); transition: box-shadow 0.2s; cursor: text; }
+  .qr__f:focus-within { box-shadow: inset 0 0 0 2px var(--rojo); }
+  .qr__f > span { font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(244, 242, 238, 0.5); white-space: nowrap; }
+  .qr__f input, .qr__f select { width: 100%; min-width: 0; border: 0; background: none; color: #fff; text-align: center; font-size: 1.05rem; font-weight: 650; font-variant-numeric: tabular-nums; outline: none; -moz-appearance: textfield; appearance: none; text-align-last: center; }
+  .qr__f select { cursor: pointer; font-size: 0.95rem; }
+  .qr__f select option { color: var(--asfalto); }
+  .qr__f input::-webkit-outer-spin-button, .qr__f input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .qr__info { display: grid; align-content: center; padding: 6px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.03); font-size: 0.78rem; line-height: 1.35; color: rgba(244, 242, 238, 0.6); }
+  .qr__info b { color: #fff; font-weight: 650; }
+  .qr__x { display: grid; place-items: center; border-radius: 10px; color: rgba(244, 242, 238, 0.4); font-size: 1.2rem; transition: color 0.2s, background-color 0.2s; }
+  .qr__x:hover:not(:disabled) { color: #fff; background: rgba(215, 25, 32, 0.35); }
+  .qr__x:disabled { opacity: 0.25; cursor: default; }
+  .qt__shipf { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .qt__add { height: 36px; padding: 0 14px; border-radius: 11px; color: var(--brasa); font-weight: 650; font-size: 0.86rem; box-shadow: inset 0 0 0 1px rgba(255, 77, 61, 0.45); border: 0; background: none; transition: background-color 0.2s; }
+  .qt__add:hover { background: rgba(255, 77, 61, 0.1); }
+  .qt__add:disabled { opacity: 0.4; }
+  .qt__sum { color: rgba(244, 242, 238, 0.8); text-transform: none !important; letter-spacing: 0.02em !important; font-size: 0.78rem !important; }
+  .qt__sum b { color: #fff; }
+  .qt__drop { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; border: 1.5px dashed rgba(255, 77, 61, 0.35); background: rgba(215, 25, 32, 0.04); cursor: pointer; transition: background-color 0.25s, border-color 0.25s; }
+  .qt__drop:hover, .qt__drop.over { background: rgba(215, 25, 32, 0.12); border-color: var(--brasa); }
+  .qt__drop:focus-within { outline: 2px solid var(--brasa); outline-offset: 2px; }
+  .qt__dropi { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: rgba(255, 77, 61, 0.14); color: var(--brasa); }
+  .qt__dropt { display: grid; gap: 3px; font-size: 0.86rem; }
+  .qt__dropt b { font-weight: 600; }
+  .qt__dropt u { color: var(--brasa); text-underline-offset: 3px; }
+  .qt__dropt small { color: rgba(244, 242, 238, 0.5); font-size: 0.74rem; }
+  .qt__tpl { margin: 6px 0 0 4px; padding: 0; border: 0; background: none; color: rgba(244, 242, 238, 0.65); font-size: 0.78rem; text-decoration: underline; text-underline-offset: 3px; }
+  .qt__tpl:hover { color: #fff; }
+  [data-qbulk][hidden] { display: none; }
+
+  /* opciones */
+  .qt__og2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .qt__og { display: grid; gap: 6px; min-width: 0; margin: 0; padding: 10px; border: 0; border-radius: 18px; background: var(--qb); box-shadow: inset 0 0 0 1px var(--ql); }
+  .qt__og legend { float: left; padding: 2px 4px 4px; }
+  .qt__og legend + * { clear: left; }
+  .qt__chip span { display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 8px 12px; border-radius: 12px; font-size: 0.86rem; font-weight: 600; color: rgba(244, 242, 238, 0.72); cursor: pointer; box-shadow: inset 0 0 0 1px transparent; transition: background-color 0.25s, color 0.25s, box-shadow 0.25s; }
+  .qt__chip span:hover { color: #fff; background: rgba(255, 255, 255, 0.03); }
+  .qt__chip em { margin-left: auto; padding: 3px 7px; border-radius: 6px; background: rgba(255, 255, 255, 0.07); font-family: var(--mono); font-style: normal; font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(244, 242, 238, 0.7); white-space: nowrap; }
+  .qt__chip input:checked + span { background: var(--qb2); color: #fff; box-shadow: inset 0 0 0 1.5px var(--brasa); }
+  .qt__chip input:checked + span svg { color: var(--brasa); }
+  .qt__chip input:checked + span em { background: rgba(255, 77, 61, 0.16); color: var(--brasa); }
+
+  /* fecha */
+  .qt__date { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding: 10px 16px; border-radius: 16px; background: var(--qb); box-shadow: inset 0 0 0 1px var(--ql); }
+  .qt__date b { font-weight: 650; }
+  .qt__chg { margin-left: auto; padding: 4px 0; border: 0; background: none; color: var(--brasa); font-weight: 650; font-size: 0.86rem; }
+  .qt__days { flex-basis: 100%; display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 2px; }
+  .qt__days[hidden] { display: none; }
+  .qt__day span { display: grid; justify-items: center; gap: 1px; min-width: 62px; padding: 8px 6px; border-radius: 12px; background: #121316; box-shadow: inset 0 0 0 1px var(--ql); font-size: 0.72rem; color: rgba(244, 242, 238, 0.6); text-transform: capitalize; cursor: pointer; transition: box-shadow 0.2s, color 0.2s; }
+  .qt__day span b { font-size: 1.15rem; color: #fff; }
+  .qt__day input:checked + span { box-shadow: inset 0 0 0 1.5px var(--brasa); color: #fff; background: rgba(215, 25, 32, 0.12); }
+
+  /* CTA */
+  .qt__cta { --b: var(--rojo); position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 62px; padding: 0 24px; border: 0; border-radius: 18px; background: var(--b); color: #fff; font-weight: 750; font-stretch: 110%; font-size: 1.06rem; text-decoration: none; overflow: hidden; isolation: isolate; box-shadow: 0 18px 40px -18px rgba(215, 25, 32, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.18); transition: transform 0.35s var(--ease), box-shadow 0.35s; }
+  .qt__cta::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%); transform: translateX(-110%); transition: transform 0.8s var(--ease); }
+  .qt__cta:hover { transform: translateY(-2px); box-shadow: 0 24px 50px -18px rgba(215, 25, 32, 1), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+  .qt__cta:hover::before { transform: translateX(110%); }
+  .qt__cta svg { transition: transform 0.35s var(--ease); }
+  .qt__cta:hover svg { transform: translateX(4px); }
+  .qt__cta:disabled { opacity: 0.6; cursor: progress; transform: none; }
+  .qt__cta--sm { width: auto; height: 52px; font-size: 0.98rem; border-radius: 15px; }
+  .qt__cta--go { margin-top: 2px; }
+  .qt__cta.is-busy span::after { content: ''; display: inline-block; width: 14px; height: 14px; margin-left: 10px; vertical-align: -2px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.4); border-top-color: #fff; animation: qt-spin 0.7s linear infinite; }
+  @keyframes qt-spin { to { transform: rotate(360deg); } }
+  .qt__micro { display: flex; align-items: center; gap: 8px; margin: -2px 0 0; font-size: 0.78rem; color: rgba(244, 242, 238, 0.55); }
+  .qt__err { margin: 0; color: var(--brasa); font-size: 0.88rem; font-weight: 600; }
+
+  /* precios */
+  .qt__rates { display: grid; gap: 8px; padding-top: 14px; margin-top: 2px; border-top: 1px solid var(--ql); }
+  .qt__rh { display: flex; align-items: center; gap: 8px; margin: 0 0 2px; font-size: 0.86rem; font-weight: 600; color: rgba(244, 242, 238, 0.85); }
+  .qt__rh i { background: #f2b33d; animation: none; }
+  .qt__rates.is-loading .qt__rh i { background: var(--brasa); animation: qt-dot 1s infinite; }
+  .qt__rates.is-ready .qt__rh i { background: #35d07f; animation: qt-dot 1.8s infinite; box-shadow: none; }
+  .qt__rl { display: grid; gap: 8px; }
+  .qt__rate { position: relative; display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 14px; min-height: 72px; padding: 12px 18px 12px 14px; border-radius: 18px; background: var(--qb); box-shadow: inset 0 0 0 1px var(--ql); cursor: default; overflow: hidden; transition: box-shadow 0.3s, background-color 0.3s, transform 0.4s var(--ease); }
+  .qt__rates.is-ready .qt__rate { cursor: pointer; }
+  .qt__rates.is-ready .qt__rate:hover { transform: translateY(-1px); }
+  .qt__rate:has(input:checked) { box-shadow: inset 0 0 0 2px var(--brasa); background: linear-gradient(100deg, rgba(215, 25, 32, 0.16), var(--qb) 60%); }
+  .qt__rates:not(.is-ready) .qt__rate:has(input:checked) { box-shadow: inset 0 0 0 1px var(--ql); background: var(--qb); }
+  .qt__ri { width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; background: var(--qb2); color: rgba(244, 242, 238, 0.7); }
+  .qt__rate:has(input:checked) .qt__ri { background: var(--rojo); color: #fff; }
+  .qt__rates:not(.is-ready) .qt__rate .qt__ri { background: var(--qb2); color: rgba(244, 242, 238, 0.5); }
+  .qt__rt { display: grid; gap: 3px; min-width: 0; }
+  .qt__rt b { display: flex; align-items: center; gap: 8px; font-size: 1.04rem; font-weight: 700; }
+  .qt__rt em { padding: 3px 7px; border-radius: 6px; background: rgba(255, 77, 61, 0.16); color: var(--brasa); font-family: var(--mono); font-style: normal; font-size: 0.54rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; }
+  .qt__rt small { color: rgba(244, 242, 238, 0.58); font-size: 0.82rem; }
+  .qt__rp { font-stretch: 125%; font-weight: 850; font-style: italic; font-size: 1.55rem; font-variant-numeric: tabular-nums; white-space: nowrap; color: #fff; }
+  .qt__rates:not(.is-ready) .qt__rp { font-family: var(--sans); font-stretch: 100%; font-style: normal; font-weight: 500; font-size: 0.8rem; color: rgba(244, 242, 238, 0.4); }
+  .qt__rates.is-loading .qt__rate::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.07) 50%, transparent 80%); animation: qt-shim 1s linear infinite; }
+  .qt__rates.is-loading .qt__rp, .qt__rates.is-loading .qt__rt small { color: transparent; border-radius: 6px; background: rgba(255, 255, 255, 0.07); }
+  @keyframes qt-shim { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+  .qt__rates.is-ready .qt__rate { animation: qt-rate 0.6s var(--ease) both; }
+  .qt__rates.is-ready .qt__rate + .qt__rate { animation-delay: 90ms; }
+  @keyframes qt-rate { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+  .qt__rates.flash .qt__rp { animation: qt-flash 0.5s; }
+  @keyframes qt-flash { 30% { color: var(--brasa); } }
+  .qt__save { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 0; border-radius: 14px; background: rgba(53, 208, 127, 0.08); color: #8ee6b4; font-size: 0.84rem; font-weight: 600; text-align: left; box-shadow: inset 0 0 0 1px rgba(53, 208, 127, 0.25); transition: background-color 0.2s; }
+  .qt__save:hover { background: rgba(53, 208, 127, 0.16); }
+  .qt__save[hidden] { display: none; }
+  .qt__fine { margin: 2px 0 0; font-size: 0.74rem; line-height: 1.5; color: rgba(244, 242, 238, 0.45); }
+
+  /* pasos de reserva */
+  .qt__pane:not([data-pane='0']) { align-content: start; }
+  .qt__ph { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .qt__h { margin: 0; font-stretch: 112%; font-weight: 800; font-size: clamp(1.3rem, 2vw, 1.7rem); letter-spacing: -0.01em; outline: none; }
+  .qt__demo { padding: 6px 10px; border: 0; border-radius: 9px; background: rgba(255, 255, 255, 0.05); color: rgba(244, 242, 238, 0.7); font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s, background-color 0.2s; }
+  .qt__demo:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+  .qt__place { justify-self: start; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 0; border-radius: 12px; background: var(--qb); box-shadow: inset 0 0 0 1px var(--ql); color: #fff; font-size: 0.9rem; font-weight: 600; }
+  .qt__place svg { color: var(--brasa); }
+  .qt__place u { color: rgba(244, 242, 238, 0.55); font-size: 0.8rem; font-weight: 500; text-underline-offset: 3px; }
+  .qt__hint { margin: 2px 0 0; color: rgba(244, 242, 238, 0.7); font-size: 0.92rem; line-height: 1.5; }
+  .qt__hint b { color: #fff; }
+  .qt__fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .qt__fld { display: grid; gap: 2px; padding: 10px 14px; border-radius: 15px; background: var(--qb); box-shadow: inset 0 0 0 1px var(--ql); cursor: text; transition: box-shadow 0.2s; }
+  .qt__fld--w { grid-column: 1 / -1; }
+  .qt__fld:focus-within { box-shadow: inset 0 0 0 2px var(--rojo); }
+  .qt__fld.bad { box-shadow: inset 0 0 0 2px var(--brasa); animation: qt-shake 0.4s; }
+  .qt__fld > span { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244, 242, 238, 0.5); }
+  .qt__fld input { width: 100%; height: 28px; padding: 0; border: 0; background: none; color: #fff; font-size: 1rem; font-weight: 550; outline: none; }
+  .qt__fld input::placeholder { color: rgba(244, 242, 238, 0.28); }
+  [data-mode][hidden] { display: none; }
+  [data-mode] { display: grid; gap: 10px; }
+  .qt__sucs { display: grid; gap: 8px; }
+  .qt__suc span { display: grid; grid-template-columns: 30px 1fr auto; gap: 4px 12px; align-items: start; padding: 12px 14px; border-radius: 16px; background: var(--qb); box-shadow: inset 0 0 0 1px var(--ql); cursor: pointer; animation: qr-in 0.45s var(--ease) both; transition: box-shadow 0.25s, background-color 0.25s; }
+  .qt__suc i { grid-row: span 3; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--qb2); font-family: var(--mono); font-style: normal; font-size: 0.72rem; }
+  .qt__suc b { font-size: 0.98rem; }
+  .qt__suc em { font-style: normal; font-family: var(--mono); font-size: 0.66rem; color: var(--brasa); white-space: nowrap; }
+  .qt__suc small { grid-column: 2 / -1; color: rgba(244, 242, 238, 0.6); font-size: 0.8rem; line-height: 1.4; }
+  .qt__suc input:checked + span { box-shadow: inset 0 0 0 2px var(--brasa); background: linear-gradient(100deg, rgba(215, 25, 32, 0.14), var(--qb) 70%); }
+  .qt__suc input:checked + span i { background: var(--rojo); }
+  .qt__sk { height: 78px; border-radius: 16px; background: var(--qb); position: relative; overflow: hidden; }
+  .qt__sk::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.06) 50%, transparent 80%); animation: qt-shim 1s linear infinite; }
+  .qt__check { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; color: rgba(244, 242, 238, 0.8); cursor: pointer; }
+  .qt__check input { width: 18px; height: 18px; margin-top: 1px; accent-color: var(--rojo); flex: none; }
+  .qt__note { margin: 0; color: rgba(244, 242, 238, 0.45); text-transform: none !important; letter-spacing: 0.02em !important; line-height: 1.5; }
+  .qt__nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; flex-wrap: wrap; }
+  .qt__back { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 14px; border: 0; border-radius: 13px; background: none; color: rgba(244, 242, 238, 0.75); font-weight: 600; font-size: 0.9rem; box-shadow: inset 0 0 0 1px var(--ql); transition: color 0.2s, background-color 0.2s; }
+  .qt__back:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+  .qt__bill { display: grid; margin: 0; padding: 4px 16px; border-radius: 18px; background: var(--qb); box-shadow: inset 0 0 0 1px var(--ql); }
+  .qt__bill div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px dashed var(--ql); font-size: 0.9rem; }
+  .qt__bill div:last-child { border: 0; }
+  .qt__bill dt { color: rgba(244, 242, 238, 0.55); }
+  .qt__bill dd { margin: 0; text-align: right; font-weight: 600; }
+  .qt__total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 4px 4px 0; }
+  .qt__total span { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244, 242, 238, 0.6); }
+  .qt__total b { font-stretch: 125%; font-weight: 850; font-style: italic; font-size: clamp(2rem, 3.4vw, 2.6rem); color: #fff; line-height: 1; font-variant-numeric: tabular-nums; }
+  .qt__og--pay { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .qt__og--pay legend { grid-column: 1 / -1; }
+  .qt__og--pay .qt__chip span { justify-content: center; text-align: center; font-size: 0.8rem; min-height: 50px; line-height: 1.2; }
+
+  /* etiqueta */
+  .qt__ok { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 99px; background: rgba(53, 208, 127, 0.12); color: #8ee6b4; }
+  .qt__printer { display: grid; justify-items: center; padding-top: 4px; }
+  .qt__slot { width: 100%; height: 14px; border-radius: 10px; background: #050506; box-shadow: inset 0 -4px 10px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.06); }
+  .qt__lbl { width: calc(100% - 28px); margin-top: -7px; padding: 18px 20px 14px; display: grid; gap: 14px; border-radius: 0 0 14px 14px; transform-origin: top; }
+  .qt__lbl.print { animation: qt-print 1.5s steps(30) both; }
+  @keyframes qt-print { from { clip-path: inset(0 0 100% 0); transform: translateY(-24px); } to { clip-path: inset(0 0 0 0); transform: none; } }
+  .qt__lh { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 3px solid var(--asfalto); }
+  .qt__lbl-logo { height: 22px; width: auto; color: var(--rojo); }
+  .qt__lsvc { padding: 5px 10px; border-radius: 6px; background: var(--asfalto); color: #fff; font-stretch: 125%; font-weight: 850; font-style: italic; font-size: 0.86rem; text-transform: uppercase; }
+  .qt__lg { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .qt__lg div { display: grid; gap: 2px; min-width: 0; }
+  .qt__lg div + div { padding-left: 14px; border-left: 2px dashed rgba(15, 16, 18, 0.15); }
+  .qt__lbl .mono { color: rgba(15, 16, 18, 0.5); font-size: 0.58rem; }
+  .qt__lg b { font-stretch: 108%; font-size: 1rem; line-height: 1.2; }
+  .qt__lg small { color: rgba(15, 16, 18, 0.65); font-size: 0.78rem; line-height: 1.35; }
+  .qt__lm { display: grid; grid-template-columns: 112px 1fr; gap: 16px; align-items: center; padding: 12px 0; border-top: 2px dashed rgba(15, 16, 18, 0.15); border-bottom: 2px dashed rgba(15, 16, 18, 0.15); }
+  .qt__qr { width: 112px; height: 112px; border-radius: 6px; background: repeating-conic-gradient(rgba(15, 16, 18, 0.06) 0 25%, transparent 0 50%) 0 0 / 14px 14px; }
+  .qt__qr svg { display: block; width: 100%; height: 100%; }
+  .qt__lmi { display: grid; gap: 4px; min-width: 0; }
+  .qt__ln { font-family: var(--mono); font-size: clamp(0.82rem, 3.4vw, 1.3rem); font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; }
+  .qt__lcode { font-stretch: 125%; font-weight: 850; font-style: italic; font-size: 2rem; line-height: 1; color: var(--rojo); }
+  .qt__lbc { height: 46px; }
+  .qt__lf { margin: 0; text-align: center; font-size: 0.56rem !important; }
+  .qt__done { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  /* escenario */
+  .qt__stage { position: relative; min-height: 640px; border-radius: 26px; overflow: hidden; background: radial-gradient(90% 70% at 70% 40%, #2a1214, #121316 70%); isolation: isolate; perspective: 1000px; box-shadow: inset 0 0 0 1px var(--ql); }
+  .qt__map { --z: 1; position: absolute; inset: 24px 16px 56px 16px; width: calc(100% - 32px); height: calc(100% - 80px); overflow: visible; }
+  .qt__provs { --ve: non-scaling-stroke; fill: rgba(255, 255, 255, 0.06); stroke: rgba(255, 255, 255, 0.16); stroke-width: 1; }
+  .qt__lanes path { fill: none; stroke: rgba(255, 77, 61, 0.55); stroke-width: 1.6; stroke-dasharray: 0.02 0.03; stroke-linecap: round; animation: qt-flow 2.4s linear infinite; transition: opacity 0.5s; }
+  .qt__lanes path.hot { stroke: #fff; stroke-width: 2.6; }
+  @keyframes qt-flow { to { stroke-dashoffset: -0.1; } }
+  .qt__lanes circle { fill: rgba(255, 255, 255, 0.75); }
+  .qt__lanes { transition: opacity 0.5s; }
+  .qt__stage.has-route .qt__lanes, .qt__stage.is-zoom .qt__lanes { opacity: 0; }
+  .qt__arc { fill: none; stroke: var(--brasa); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; vector-effect: non-scaling-stroke; }
+  .qt__arc--glow { stroke-width: 12; opacity: 0.22; filter: blur(3px); }
+  .qt__arc.drawn { transition: stroke-dashoffset 1.2s var(--ease); stroke-dashoffset: 0; }
+  .qt__arc.solid { stroke-dasharray: none; }
+  .qt__stage.is-zoom .qt__arc--glow { opacity: 0; }
+  .qt__mk { opacity: 0; transition: opacity 0.4s; }
+  .qt__mk.on { opacity: 1; }
+  .qt__mk circle { fill: #fff; }
+  .qt__mk--d circle { fill: var(--brasa); }
+  .qt__mk .qt__ring { fill: none; stroke: currentColor; stroke-width: 2; color: #fff; transform-box: fill-box; transform-origin: center; animation: qt-ring 1.8s ease-out infinite; }
+  .qt__mk--d .qt__ring { color: var(--brasa); }
+  @keyframes qt-ring { from { transform: scale(0.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+  .qt__van { fill: #fff; opacity: 0; transition: opacity 0.4s; transform: scale(var(--z)); }
+  .qt__van circle { fill: #1b1c20; }
+  .qt__stage.is-zoom .qt__van { opacity: 0 !important; }
+  .qt__cands g { cursor: pointer; }
+  .qt__cands circle { fill: var(--asfalto-3); stroke: #fff; stroke-width: 2; vector-effect: non-scaling-stroke; transition: fill 0.3s; }
+  .qt__cands text { fill: #fff; font-family: var(--mono); font-size: 22px; font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .qt__cands g.on circle { fill: var(--rojo); }
+  .qt__cands g { animation: qt-pop 0.5s var(--ease) both; }
+  @keyframes qt-pop { from { opacity: 0; } }
+  .qt__live { position: absolute; left: 18px; top: 16px; z-index: 3; display: flex; align-items: center; gap: 8px; max-width: calc(100% - 36px); padding: 8px 12px; border-radius: 99px; background: rgba(15, 16, 18, 0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: inset 0 0 0 1px var(--ql); color: rgba(244, 242, 238, 0.85); }
+  .qt__live span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .qbox { position: absolute; left: 30%; top: 40%; z-index: 2; transform: translate(-50%, -50%); transform-style: preserve-3d; transition: transform 0.9s var(--ease), opacity 0.5s; }
+  .qt__stage.is-zoom .qbox { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  .qbox__c { --w: 160px; --h: 110px; --d: 120px; position: relative; width: var(--w); height: var(--h); transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(-32deg); animation: qbox-float 6s ease-in-out infinite; transition: width 0.5s var(--ease), height 0.5s var(--ease); }
+  @keyframes qbox-float { 50% { transform: rotateX(-24deg) rotateY(-20deg) translateY(-10px); } }
+  .qbox.bump .qbox__c { animation: qbox-bump 0.6s var(--ease), qbox-float 6s ease-in-out 0.6s infinite; }
+  @keyframes qbox-bump { 40% { transform: rotateX(-20deg) rotateY(-32deg) translateY(-26px) scale(1.06); } }
+  .qf { position: absolute; display: block; background: linear-gradient(160deg, #d6b07a, #b98f57); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12); transition: all 0.5s var(--ease); }
+  .qf--front, .qf--back { width: var(--w); height: var(--h); }
+  .qf--front { transform: translateZ(calc(var(--d) / 2)); }
+  .qf--back { transform: rotateY(180deg) translateZ(calc(var(--d) / 2)); }
+  .qf--right, .qf--left { width: var(--d); height: var(--h); left: calc((var(--w) - var(--d)) / 2); background: linear-gradient(160deg, #c49c63, #a57c45); }
+  .qf--right { transform: rotateY(90deg) translateZ(calc(var(--w) / 2)); display: grid; place-items: center; }
+  .qf--left { transform: rotateY(-90deg) translateZ(calc(var(--w) / 2)); }
+  .qf--top, .qf--bottom { width: var(--w); height: var(--d); top: calc((var(--h) - var(--d)) / 2); }
+  .qf--top { transform: rotateX(90deg) translateZ(calc(var(--h) / 2)); background: linear-gradient(160deg, #e2c391, #cba56d); }
+  .qf--bottom { transform: rotateX(-90deg) translateZ(calc(var(--h) / 2)); background: #7d5c31; }
+  .qf__tape { position: absolute; top: 0; bottom: 0; left: 50%; width: 16%; max-width: 28px; transform: translateX(-50%); background: var(--rojo); }
+  .qf__lbl { position: absolute; left: 8%; bottom: 10%; width: 32%; min-width: 34px; padding: 4px; background: #fff; border-radius: 3px; display: grid; gap: 3px; font-family: var(--mono); font-size: 0.5rem; color: #111; }
+  .qf__lbl .barcode { height: 10px; }
+  .qf__em { width: 60%; height: auto; max-height: 70%; color: #fff; }
+  .qbox__n { position: absolute; left: 50%; top: calc(100% + 54px); transform: translateX(-50%); padding: 6px 10px; border-radius: 99px; background: rgba(15, 16, 18, 0.75); box-shadow: inset 0 0 0 1px var(--ql); color: #fff; white-space: nowrap; }
+  .qbox.pallet .qf--bottom { background: #6b4a24; box-shadow: 0 0 0 6px #8a6232; }
+
+  .qt__top { position: absolute; left: 16px; bottom: 58px; z-index: 3; width: min(300px, calc(100% - 32px)); display: grid; gap: 8px; padding: 14px; border-radius: 20px; background: rgba(15, 16, 18, 0.78); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 0 0 0 1px var(--ql); transition: opacity 0.5s, transform 0.6s var(--ease), visibility 0.5s; }
+  .qt__stage.has-route .qt__top, .qt__stage.is-zoom .qt__top { opacity: 0; visibility: hidden; transform: translateY(16px); }
+  .qt__top ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .qt__top button { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; width: 100%; padding: 8px 8px; border: 0; border-radius: 10px; background: none; color: #fff; text-align: left; font-size: 0.86rem; font-weight: 600; transition: background-color 0.2s; }
+  .qt__top button:hover, .qt__top button:focus-visible { background: rgba(255, 255, 255, 0.06); }
+  .qt__top button b { color: var(--brasa); font-variant-numeric: tabular-nums; }
+  .qt__top button small { grid-column: 1 / -1; color: rgba(244, 242, 238, 0.5); font-size: 0.72rem; font-weight: 500; }
+  .qt__top button i { grid-column: 1 / -1; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+  .qt__top button i::before { content: ''; display: block; width: var(--w); height: 100%; background: var(--brasa); }
+  .qt__toph { margin: 0; font-size: 0.74rem; color: rgba(244, 242, 238, 0.55); }
+  .qt__hud { position: absolute; left: 18px; right: 18px; bottom: 16px; z-index: 3; display: flex; justify-content: space-between; gap: 6px 12px; flex-wrap: wrap; color: rgba(244, 242, 238, 0.75); }
+  .qt__hud p { margin: 0; }
+  .qt__vw { color: var(--brasa); }
+
+  /* confianza */
+  .qt__trust { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; }
+  .qt__trust li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; background: #121316; box-shadow: inset 0 0 0 1px var(--ql); }
+  .qt__ti { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: rgba(215, 25, 32, 0.14); color: var(--brasa); }
+  .qt__trust b { display: block; font-size: 0.86rem; }
+  .qt__trust small { color: rgba(244, 242, 238, 0.55); font-size: 0.76rem; }
+
+  .qt__toast { position: fixed; left: 50%; bottom: 24px; z-index: 260; transform: translateX(-50%); padding: 14px 18px; border-radius: 16px; background: #fff; color: var(--asfalto); box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6); font-size: 0.92rem; max-width: calc(100vw - 32px); }
+
+  @media (max-width: 1100px) {
+    .qt__trust { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 1000px) {
+    .qt__grid { grid-template-columns: minmax(0, 1fr); }
+    .qt__stage { min-height: 460px; order: -1; }
+    .qbox { left: 32%; top: 42%; }
+    .qt__top { bottom: 50px; }
+  }
+  @media (max-width: 640px) {
+    .qt { padding: 8px; border-radius: 26px; gap: 8px; }
+    .qt__panel { padding: 12px; border-radius: 20px; }
+    .qt__tick-k { display: none; }
+    .qt__tick { padding-left: 6px; }
+    .qt__steps { flex-wrap: nowrap; overflow-x: auto; margin: 0 -12px 14px; padding: 0 12px; scrollbar-width: none; }
+    .qt__steps::-webkit-scrollbar { display: none; }
+    .qt__st { flex: none; }
+    .qt__st:not([aria-current='step']) .qt__stt { display: none; }
+    .qt__st:not([aria-current='step']) { padding-right: 5px; }
+    .qt__tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .qt__route { grid-template-columns: minmax(0, 1fr); }
+    .qt__swap { left: auto; right: 14px; transform: rotate(90deg); }
+    .qt__swap:hover { transform: rotate(270deg); }
+    .qr { grid-template-columns: repeat(2, minmax(0, 1fr)) 30px; }
+    .qr--sobre, .qr--vinos { grid-template-columns: 0.8fr 1.6fr 30px; }
+    .qr--sobre .qr__info, .qr--vinos .qr__info { grid-column: 1 / -1; grid-row: 2; }
+    .qr__x { grid-column: 3; grid-row: 1; }
+    .qr__dims { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .qt__og2 { grid-template-columns: minmax(0, 1fr); }
+    .qt__og--pay { grid-template-columns: minmax(0, 1fr); }
+    .qt__fields { grid-template-columns: minmax(0, 1fr); }
+    .qt__rate { grid-template-columns: 38px 1fr; gap: 4px 12px; padding: 12px 14px; }
+    .qt__ri { width: 38px; height: 38px; grid-row: span 2; }
+    .qt__rp { grid-column: 2; font-size: 1.35rem; }
+    .qt__stage { min-height: 400px; border-radius: 20px; }
+    .qbox { left: 30%; top: 38%; }
+    .qt__top { width: calc(100% - 24px); left: 12px; bottom: 66px; padding: 10px; }
+    .qt__toph { display: none; }
+    .qt__stage:not(.has-route) .qbox { opacity: 0; }
+    .qt__cta { font-stretch: 100%; font-size: 0.98rem; padding: 0 18px; }
+    .qt__top li:nth-child(n + 4) { display: none; }
+    .qt__lm { grid-template-columns: 92px 1fr; gap: 12px; }
+    .qt__qr { width: 92px; height: 92px; }
+    .qt__lg { grid-template-columns: minmax(0, 1fr); }
+    .qt__lg div + div { padding: 10px 0 0; border-left: 0; border-top: 2px dashed rgba(15, 16, 18, 0.15); }
+    .qt__lbl { width: calc(100% - 16px); padding: 14px; }
+    .qt__trust { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .qt__tick-tr { animation: none; }
+    .qt__tick-vp { overflow-x: auto; }
+  }
+</style>
+
+<script>
+  import '../scripts/quote'
+</script>

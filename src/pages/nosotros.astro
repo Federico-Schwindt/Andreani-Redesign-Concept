@@ -1,0 +1,136 @@
+---
+import Base from '../layouts/Base.astro'
+import PageHead from '../components/PageHead.astro'
+import Icon from '../components/Icon.astro'
+import Lines from '../components/Lines.astro'
+import Emblem from '../components/Emblem.astro'
+import { media, historia, sustentabilidad, stats } from '../lib/site'
+---
+<Base title="Nuestra historia" description="De dos camiones entre Casilda y Rosario en 1945 a la red logística más automatizada del país. Concepto de rediseño para Andreani.">
+  <PageHead crumb="Nosotros" kick="Desde 1945" title="80 años|*sin frenar.*" lede="Lo que empezó como una empresa familiar de transporte entre Casilda y Rosario es hoy una plataforma de soluciones logísticas que mueve a la Argentina." video="ruta" />
+
+  <section class="sec t-light" aria-labelledby="hi-t">
+    <div class="wrap hi">
+      <div class="hi__intro">
+        <p class="kick">Nuestra historia</p>
+        <Lines as="h2" class="dsp d2" text="De Casilda|*al país entero.*" />
+        <span id="hi-t" class="sr-only">Línea de tiempo</span>
+        <Emblem class="hi__em" />
+      </div>
+      <ol class="vtl" data-vtl>
+        <span class="vtl__line" aria-hidden="true"><i data-vtl-fill></i></span>
+        {historia.map((h, i) => (
+          <li class="vtl__it" data-rv style={`--d:${i * 40}`}>
+            <span class="vtl__y dsp">{h.y}</span>
+            <div>
+              <h3 class="h3">{h.t}</h3>
+              <p class="prose">{h.d}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="t-red sec--sm" aria-label="Hoy">
+    <div class="wrap hoy">
+      <div data-rv><p class="dsp hoy__v"><span data-count={stats.colaboradores}>{stats.colaboradores.toLocaleString('es-AR')}</span></p><p>colaboradores en Argentina y Brasil</p></div>
+      <div data-rv style="--d:80"><p class="dsp hoy__v"><span data-count={stats.domicilios} data-dec="1">{stats.domicilios}</span> M</p><p>domicilios visitados en 2025</p></div>
+      <div data-rv style="--d:160"><p class="dsp hoy__v"><span data-count={stats.destinatarios}>{stats.destinatarios}</span> M</p><p>destinatarios por mes</p></div>
+      <div data-rv style="--d:240"><p class="dsp hoy__v">N.º 1</p><p>en logística: MERCO Reputación, Talento y ESG 2025</p></div>
+    </div>
+  </section>
+
+  <section class="sec t-dark br" aria-labelledby="br-t">
+    <div class="wrap br__in">
+      <div class="br__media" data-rv>
+        <img src={media('aereo.avif')} alt="" width="1280" height="715" loading="lazy" decoding="async" />
+        <video muted loop playsinline preload="none" data-src={media('aereo.mp4')} aria-hidden="true"></video>
+      </div>
+      <div>
+        <p class="kick">Región</p>
+        <Lines as="h2" class="dsp d2" text="Argentina|*y Brasil.*" />
+        <p class="lede" data-rv style="margin-top:22px">Desde 2001 en Brasil, con operaciones en San Pablo, Río de Janeiro y Espírito Santo, especializadas en salud. Y con Andreani GlobAll Pack, courier y carga internacional hacia todo el mundo.</p>
+        <ul class="br__list" data-rv>
+          <li><Icon name="plane" size={20} /> Centros aéreos en Aeroparque y Ezeiza</li>
+          <li><Icon name="globe" size={20} /> {stats.crossBorder.toLocaleString('es-AR')} millones de envíos cross-border en 2025</li>
+          <li><Icon name="shield" size={20} /> Plantas especializadas para productos farmacéuticos</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec t-light" id="sustentabilidad" aria-labelledby="su-t">
+    <div class="wrap">
+      <div class="shead">
+        <div><p class="kick">Sustentabilidad</p><Lines as="h2" class="dsp d2" text="Moverse mejor|*también es llegar.*" /></div>
+        <p class="lede" data-rv id="su-t">Cifras del Reporte de Sustentabilidad 2025.</p>
+      </div>
+      <div class="su">
+        {sustentabilidad.map((s, i) => (
+          <div class="su__it" data-rv style={`--d:${i * 80}`}>
+            <Icon name={['bolt', 'leaf', 'truck', 'recycle'][i] ?? 'leaf'} size={28} />
+            <p class="dsp su__v">{s.v}</p>
+            <p class="prose">{s.l}</p>
+          </div>
+        ))}
+      </div>
+      <div class="fund" data-rv>
+        <div>
+          <p class="kick">Fundación Andreani</p>
+          <h3 class="dsp d3" style="margin-top:14px">Desde 1990, <em>arte y cultura</em> para todo el país.</h3>
+        </div>
+        <p class="prose">Nació a partir de los pedidos de envíos solidarios. Hoy acompaña el arte y la cultura, y Andreani Logística Social traslada gratis los recursos de organizaciones sociales de todo el país.</p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hi { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(28px, 6vw, 110px); align-items: start; }
+  .hi__intro { position: sticky; top: calc(var(--hdr) + 40px); }
+  .hi__intro .kick { margin-bottom: 20px; }
+  .hi :global(.hi__em) { width: min(320px, 70%); height: auto; color: var(--rojo); opacity: 0.12; margin-top: 40px; }
+  .vtl { position: relative; list-style: none; padding: 0 0 0 40px; margin: 0; display: grid; gap: clamp(40px, 6vw, 90px); }
+  .vtl__line { position: absolute; left: 8px; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .vtl__line i { display: block; width: 100%; height: 100%; background: var(--rojo); transform-origin: top; transform: scaleY(var(--p, 0)); }
+  .vtl__it { position: relative; display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 24px; align-items: start; }
+  .vtl__it::before { content: ''; position: absolute; left: -40px; top: 14px; width: 19px; height: 19px; border-radius: 50%; background: var(--hueso); box-shadow: inset 0 0 0 3px var(--rojo); }
+  .vtl__y { font-size: clamp(3rem, 5vw, 4.6rem); line-height: 0.85; color: var(--rojo); }
+  .vtl__it .h3 { margin-bottom: 8px; }
+  .hoy { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+  .hoy > div { display: grid; gap: 8px; padding-top: 18px; border-top: 2px solid rgba(255, 255, 255, 0.45); }
+  .hoy__v { font-size: clamp(2.2rem, 3.8vw, 4.2rem); line-height: 0.9; }
+  .br__in { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: clamp(28px, 5vw, 90px); align-items: center; }
+  .br__media { position: relative; aspect-ratio: 16 / 10; border-radius: 28px; overflow: hidden; }
+  .br__media img, .br__media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .br__list { list-style: none; padding: 0; margin-top: 26px; display: grid; gap: 14px; }
+  .br__list li { display: flex; gap: 12px; align-items: center; }
+  .br__list :global(svg) { color: var(--brasa); flex: none; }
+  .su { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .su__it { display: grid; gap: 12px; align-content: start; padding: 28px; border-radius: var(--r); background: var(--blanco); box-shadow: 0 30px 60px -44px rgba(15, 16, 18, 0.45); }
+  .su__it :global(svg) { color: #2f8f5b; }
+  .su__v { font-size: clamp(2.4rem, 4vw, 3.8rem); line-height: 0.9; color: var(--asfalto); }
+  .fund { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 70px); align-items: end; margin-top: clamp(60px, 8vw, 120px); padding-top: 40px; border-top: 2px solid var(--asfalto); }
+  @media (max-width: 1000px) {
+    .hi, .br__in, .fund { grid-template-columns: minmax(0, 1fr); }
+    .hi__intro { position: static; }
+    .hoy, .su { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px) { .vtl__it { grid-template-columns: minmax(0, 1fr); gap: 8px; } .su { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<script>
+  // la línea de tiempo se completa con el scroll
+  const tl = document.querySelector<HTMLElement>('[data-vtl]')
+  const fill = document.querySelector<HTMLElement>('[data-vtl-fill]')
+  if (tl && fill) {
+    const upd = () => {
+      const r = tl.getBoundingClientRect()
+      const p = Math.min(1, Math.max(0, (innerHeight * 0.6 - r.top) / r.height))
+      fill.style.setProperty('--p', String(p))
+    }
+    addEventListener('scroll', upd, { passive: true })
+    upd()
+  }
+</script>

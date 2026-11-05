@@ -1,0 +1,9 @@
+---
+/** Define una sola vez las provincias como <symbol>; cada mapa las usa con <use href="#ar-provs">. */
+import map from '../data/ar-map.json'
+---
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="ar-provs">{map.provinces.map((p) => <path d={p.d} style="vector-effect:var(--ve,none)" />)}</g>
+  </defs>
+</svg>
